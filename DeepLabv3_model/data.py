@@ -71,7 +71,7 @@ class SegmentationDataset(Dataset):
 
 
 if __name__=="__main__":
-    filepath = "/home/popa/Documents/diplomski_rad/FingertipDetectionAndTrackingForPatternRecognitionOfAirWritingInVideos/segmentation_dataset"
+    filepath = "/home/popa/Documents/diplomski_rad/FingertipDetectionAndTrackingForPatternRecognitionOfAirWritingInVideos/segmentation_dataset/hgr1"
     train_dataset = SegmentationDataset(filepath, type='train')
     test_dataset = SegmentationDataset(filepath, type='test')
     valid_dataset = SegmentationDataset(filepath, type='valid')
