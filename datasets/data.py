@@ -166,14 +166,43 @@ class EGTEAGazePlusDataset(Dataset):
         return len(self.paths)
 
 class HGR1Dataset(Dataset):
-    def __init__(self):
-        ...
+    def __init__(self, root, type, transform=None):
+        self.root = root
+        self.paths = os.listdir(os.path.join(root, 'hgr1_images', 'original_images'))
+        size = len(self.paths)
+        if type not in ['train', 'val', 'test']:
+            raise Exception(
+                'Error while initialization. Argument type: {} is invalid. It must be train, val or test'.format(type))
+        elif type == 'train':
+            self.paths = self.paths[:int(0.8 * size)]
+        elif type == 'val':
+            self.paths = self.paths[int(0.8 * size):int(0.9 * size)]
+        else:
+            self.paths = self.paths[int(0.9 * size):]
+        if transform is None:
+            self.transform = transforms.Compose([
+                transforms.ToTensor()
+            ])
+        else:
+            self.transform = transform
 
     def __getitem__(self, item):
-        ...
+        path = self.paths[item].replace('.jpg', '')
+        img_path = os.path.join(self.root, 'hgr1_images', 'original_images', '{}.jpg'.format(path))
+        mask_path = os.path.join(self.root, 'hgr1_skin', 'skin_masks', '{}.bmp'.format(path))
+
+        img = Image.open(img_path).convert('RGB')
+        mask = Image.open(mask_path).convert('L')
+
+        # ADD TRANSFORMATIONS !!!!!!!!!
+
+        img = self.transform(img)
+        mask = self.transform(mask)
+
+        return {'img': img, 'mask': mask}
 
     def __len__(self):
-        ...
+        return len(self.paths)
 
 
 def test_dataset(dataset):
@@ -190,6 +219,6 @@ def test_dataset(dataset):
 
 
 if __name__=='__main__':
-    root = '/home/popa/Documents/diplomski_rad/FingertipDetectionAndTrackingForPatternRecognitionOfAirWritingInVideos/segmentation_dataset/hand14k'
-    datasets = EGTEAGazePlusDataset(root=root, type='test')
+    root = '/home/popa/Documents/diplomski_rad/FingertipDetectionAndTrackingForPatternRecognitionOfAirWritingInVideos/segmentation_dataset/hgr1'
+    datasets = HGR1Dataset(root=root, type='val')
     test_dataset(datasets)
