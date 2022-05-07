@@ -15,7 +15,7 @@ class EgoHandsDataset(Dataset):
         ...
 
 class EgoYouTubeHandsDataset(Dataset):
-    def __init__(self, root, type, transform):
+    def __init__(self, root, type, transform=None):
 
         if type not in ['train', 'val','test']:
             raise Exception('Error while initialization. Argument type: {} is invalid. It must be train, val or test'.format(type))
@@ -32,9 +32,9 @@ class EgoYouTubeHandsDataset(Dataset):
 
 
     def __getitem__(self, item):
-        path = self.paths[item]
+        path = self.paths[item].strip()
         img_path = os.path.join(self.root, 'images',path)
-        mask_path = os.path.join(self.root, 'masks', path)
+        mask_path = os.path.join(self.root, 'masks', path.replace('jpg','png'))
         img = Image.open(img_path).convert('RGB')
         mask = Image.open(mask_path).convert('L')
 
@@ -49,16 +49,18 @@ class EgoYouTubeHandsDataset(Dataset):
         return len(self.paths)
 
 class FreiHANDDataset(Dataset):
-    def __init__(self, root, type, transform):
+    def __init__(self, root, type, transform=None):
         self.root = root
-        if type not in ['train', 'val']:
-            raise Exception('Error while initialization. Argument type: {} is invalid. It must be train or val'.format(type))
-        elif type=='train':
-            self.type = 'traning'
+        self.paths = os.listdir(os.path.join(root, 'training', 'mask'))
+        size = len(self.paths)
+        if type not in ['train', 'val', 'test']:
+            raise Exception('Error while initialization. Argument type: {} is invalid. It must be train, val or test'.format(type))
+        elif type == 'train':
+            self.paths = self.paths[:int(0.8*size)]
+        elif type == 'val':
+            self.paths = self.paths[int(0.8 * size):int(0.9 * size)]
         else:
-            #ADD EVALUATION DATASET WITH ANNOTATIONS IN THE EVALUATION DIRECTORY !!!!!!!!!!!!!!!!!!!!!!!!!
-            self.type = 'evaluation'
-        self.len = len(os.listdir(os.path.join(root, type, 'mask')))
+            self.paths = self.paths[int(0.9 * size):]
         if transform is None:
             self.transform = transforms.Compose([
                 transforms.ToTensor()
@@ -67,9 +69,10 @@ class FreiHANDDataset(Dataset):
             self.transform = transform
 
     def __getitem__(self, item):
-        id = '0'*(8-len(str(item))) + '{}.jpg'.format(item)
-        img_path = os.path.join(self.root, self.type, id)
-        mask_path = os.path.join(self.root, self.type, id)
+        # id = '0'*(8-len(str(item))) + '{}.jpg'.format(item)
+        id = self.paths[item]
+        img_path = os.path.join(self.root, 'training', 'rgb', id)
+        mask_path = os.path.join(self.root, 'training', 'mask', id)
 
         img = Image.open(img_path).convert('RGB')
         mask = Image.open(mask_path).convert('L')
@@ -82,13 +85,22 @@ class FreiHANDDataset(Dataset):
         return {'img': img, 'mask': mask}
 
     def __len__(self):
-        ...
+        return len(self.paths)
 
 
 class HOFDataset(Dataset):
-    def __init__(self, root, transform):
+    def __init__(self, root, type, transform=None):
         self.root = root
-        self.len = len(os.listdir(os.path.join(root, 'images_resized')))
+        self.paths = os.listdir(os.path.join(root, 'images_resized'))
+        size = len(self.paths)
+        if type not in ['train', 'val', 'test']:
+            raise Exception('Error while initialization. Argument type: {} is invalid. It must be train, val or test'.format(type))
+        elif type == 'train':
+            self.paths = self.paths[:int(0.8*size)]
+        elif type == 'val':
+            self.paths = self.paths[int(0.8 * size):int(0.9 * size)]
+        else:
+            self.paths = self.paths[int(0.9 * size):]
         if transform is None:
             self.transform = transforms.Compose([
                 transforms.ToTensor()
@@ -97,8 +109,9 @@ class HOFDataset(Dataset):
             self.transform = transform
 
     def __getitem__(self, item):
-        img_path = os.path.join(self.root, 'images_resized', '{}.jpg'.format(item+1))
-        mask_path = os.path.join(self.root, 'masks', '{}.jpg'.format(item + 1))
+        path = self.paths[item].replace('.jpg','')
+        img_path = os.path.join(self.root, 'images_resized', '{}.jpg'.format(path))
+        mask_path = os.path.join(self.root, 'masks', '{}.png'.format(path))
 
         img = Image.open(img_path).convert('RGB')
         mask = Image.open(mask_path).convert('L')
@@ -111,9 +124,48 @@ class HOFDataset(Dataset):
         return {'img': img, 'mask': mask}
 
     def __len__(self):
-        return self.len
+        return len(self.paths)
 
 class EGTEAGazePlusDataset(Dataset):
+    def __init__(self, root, type, transform=None):
+        self.root = root
+        self.paths = os.listdir(os.path.join(root, 'Images'))
+        size = len(self.paths)
+        if type not in ['train', 'val', 'test']:
+            raise Exception('Error while initialization. Argument type: {} is invalid. It must be train, val or test'.format(type))
+        elif type == 'train':
+            self.paths = self.paths[:int(0.8*size)]
+        elif type == 'val':
+            self.paths = self.paths[int(0.8 * size):int(0.9 * size)]
+        else:
+            self.paths = self.paths[int(0.9 * size):]
+        if transform is None:
+            self.transform = transforms.Compose([
+                transforms.ToTensor()
+            ])
+        else:
+            self.transform = transform
+
+    def __getitem__(self, item):
+        path = self.paths[item].replace('.jpg', '')
+        img_path = os.path.join(self.root, 'Images', '{}.jpg'.format(path))
+        mask_path = os.path.join(self.root, 'Masks', '{}.png'.format(path))
+
+        img = Image.open(img_path).convert('RGB')
+        mask = Image.open(mask_path).convert('L')
+
+        # ADD TRANSFORMATIONS !!!!!!!!!
+
+        img = self.transform(img)
+        mask = self.transform(mask)
+
+        return {'img': img, 'mask': mask}
+
+
+    def __len__(self):
+        return len(self.paths)
+
+class HGR1Dataset(Dataset):
     def __init__(self):
         ...
 
@@ -124,7 +176,20 @@ class EGTEAGazePlusDataset(Dataset):
         ...
 
 
+def test_dataset(dataset):
+
+    item = next(iter(dataset))
+
+    # print(item['img'])
+    # print(item['mask'])
+
+    transforms.ToPILImage()(item['img']).show()
+    transforms.ToPILImage()(item['mask']).show()
+
+    print(len(dataset))
+
+
 if __name__=='__main__':
-    item = 16
-    id = '0'*(8-len(str(item))) + '{}.jpg'.format(item)
-    print(id)
+    root = '/home/popa/Documents/diplomski_rad/FingertipDetectionAndTrackingForPatternRecognitionOfAirWritingInVideos/segmentation_dataset/hand14k'
+    datasets = EGTEAGazePlusDataset(root=root, type='test')
+    test_dataset(datasets)
