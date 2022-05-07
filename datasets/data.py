@@ -49,11 +49,37 @@ class EgoYouTubeHandsDataset(Dataset):
         return len(self.paths)
 
 class FreiHANDDataset(Dataset):
-    def __init__(self):
-        ...
+    def __init__(self, root, type, transform):
+        self.root = root
+        if type not in ['train', 'val']:
+            raise Exception('Error while initialization. Argument type: {} is invalid. It must be train or val'.format(type))
+        elif type=='train':
+            self.type = 'traning'
+        else:
+            #ADD EVALUATION DATASET WITH ANNOTATIONS IN THE EVALUATION DIRECTORY !!!!!!!!!!!!!!!!!!!!!!!!!
+            self.type = 'evaluation'
+        self.len = len(os.listdir(os.path.join(root, type, 'mask')))
+        if transform is None:
+            self.transform = transforms.Compose([
+                transforms.ToTensor()
+            ])
+        else:
+            self.transform = transform
 
     def __getitem__(self, item):
-        ...
+        id = '0'*(8-len(str(item))) + '{}.jpg'.format(item)
+        img_path = os.path.join(self.root, self.type, id)
+        mask_path = os.path.join(self.root, self.type, id)
+
+        img = Image.open(img_path).convert('RGB')
+        mask = Image.open(mask_path).convert('L')
+
+        # ADD TRANSFORMATIONS !!!!!!!!!
+
+        img = self.transform(img)
+        mask = self.transform(mask)
+
+        return {'img': img, 'mask': mask}
 
     def __len__(self):
         ...
@@ -96,3 +122,9 @@ class EGTEAGazePlusDataset(Dataset):
 
     def __len__(self):
         ...
+
+
+if __name__=='__main__':
+    item = 16
+    id = '0'*(8-len(str(item))) + '{}.jpg'.format(item)
+    print(id)
