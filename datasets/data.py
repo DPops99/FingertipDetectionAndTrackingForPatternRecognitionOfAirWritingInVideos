@@ -1,5 +1,5 @@
 import torch
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, ConcatDataset, DataLoader
 import os
 from PIL import Image
 from torchvision.transforms import transforms
@@ -207,20 +207,26 @@ class HGR1Dataset(Dataset):
         return len(self.paths)
 
 
-def test_dataset(dataset):
+def test_dataset():
+    hgr1_root = '/home/popa/Documents/diplomski_rad/FingertipDetectionAndTrackingForPatternRecognitionOfAirWritingInVideos/segmentation_dataset/hgr1'
+    hof_root = '/home/popa/Documents/diplomski_rad/FingertipDetectionAndTrackingForPatternRecognitionOfAirWritingInVideos/segmentation_dataset/hand_over_face_corrected/hand_over_face'
+    list_datasets = [HGR1Dataset(root=hgr1_root, type='train'), HOFDataset(root=hof_root, type='train')]
+    final_dataset = ConcatDataset(list_datasets)
+    final_dataloader = DataLoader(final_dataset, batch_size=2, shuffle=True)
 
-    item = next(iter(dataset))
+    i = 0
 
-    # print(item['img'])
-    # print(item['mask'])
+    for batch in final_dataloader:
+        if i > 3:
+            break
+        imgs = batch['img'][0]
+        masks = batch['mask']
+        transforms.ToPILImage()(imgs).show()
+        i += 1
 
-    transforms.ToPILImage()(item['img']).show()
-    transforms.ToPILImage()(item['mask']).show()
 
-    print(len(dataset))
+
 
 
 if __name__=='__main__':
-    root = '/home/popa/Documents/diplomski_rad/FingertipDetectionAndTrackingForPatternRecognitionOfAirWritingInVideos/segmentation_dataset/hgr1'
-    datasets = HGR1Dataset(root=root, type='val')
-    test_dataset(datasets)
+    test_dataset()
