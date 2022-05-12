@@ -170,6 +170,7 @@ class HGR1Dataset(Dataset):
         self.root = root
         self.paths = os.listdir(os.path.join(root, 'hgr1_images', 'original_images'))
         size = len(self.paths)
+        self.img_size = (480,360)
         if type not in ['train', 'val', 'test']:
             raise Exception(
                 'Error while initialization. Argument type: {} is invalid. It must be train, val or test'.format(type))
@@ -181,6 +182,7 @@ class HGR1Dataset(Dataset):
             self.paths = self.paths[int(0.9 * size):]
         if transform is None:
             self.transform = transforms.Compose([
+                transforms.Resize(self.img_size),
                 transforms.ToTensor()
             ])
         else:
