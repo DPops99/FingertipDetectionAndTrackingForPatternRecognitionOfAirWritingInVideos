@@ -21,10 +21,12 @@ class EgoYouTubeHandsDataset(Dataset):
             raise Exception('Error while initialization. Argument type: {} is invalid. It must be train, val or test'.format(type))
 
         self.root = root
+        self.img_size = (371, 462)
         with open(os.path.join(root, 'train-val-test-split','{}.txt'.format(type))) as f:
             self.paths = f.readlines()
         if transform is None:
             self.transform = transforms.Compose([
+                transforms.Resize(self.img_size),
                 transforms.ToTensor()
             ])
         else:
@@ -53,6 +55,7 @@ class FreiHANDDataset(Dataset):
         self.root = root
         self.paths = os.listdir(os.path.join(root, 'training', 'mask'))
         size = len(self.paths)
+        self.img_size = (371, 462)
         if type not in ['train', 'val', 'test']:
             raise Exception('Error while initialization. Argument type: {} is invalid. It must be train, val or test'.format(type))
         elif type == 'train':
@@ -63,6 +66,7 @@ class FreiHANDDataset(Dataset):
             self.paths = self.paths[int(0.9 * size):]
         if transform is None:
             self.transform = transforms.Compose([
+                transforms.Resize(self.img_size),
                 transforms.ToTensor()
             ])
         else:
@@ -93,6 +97,7 @@ class HOFDataset(Dataset):
         self.root = root
         self.paths = os.listdir(os.path.join(root, 'images_resized'))
         size = len(self.paths)
+        self.img_size = (371, 462)
         if type not in ['train', 'val', 'test']:
             raise Exception('Error while initialization. Argument type: {} is invalid. It must be train, val or test'.format(type))
         elif type == 'train':
@@ -103,6 +108,7 @@ class HOFDataset(Dataset):
             self.paths = self.paths[int(0.9 * size):]
         if transform is None:
             self.transform = transforms.Compose([
+                transforms.Resize(self.img_size),
                 transforms.ToTensor()
             ])
         else:
@@ -131,6 +137,7 @@ class EGTEAGazePlusDataset(Dataset):
         self.root = root
         self.paths = os.listdir(os.path.join(root, 'Images'))
         size = len(self.paths)
+        self.img_size = (371, 462)
         if type not in ['train', 'val', 'test']:
             raise Exception('Error while initialization. Argument type: {} is invalid. It must be train, val or test'.format(type))
         elif type == 'train':
@@ -141,6 +148,7 @@ class EGTEAGazePlusDataset(Dataset):
             self.paths = self.paths[int(0.9 * size):]
         if transform is None:
             self.transform = transforms.Compose([
+                transforms.Resize(self.img_size),
                 transforms.ToTensor()
             ])
         else:
@@ -170,7 +178,7 @@ class HGR1Dataset(Dataset):
         self.root = root
         self.paths = os.listdir(os.path.join(root, 'hgr1_images', 'original_images'))
         size = len(self.paths)
-        self.img_size = (480,360)
+        self.img_size = (371,462)
         if type not in ['train', 'val', 'test']:
             raise Exception(
                 'Error while initialization. Argument type: {} is invalid. It must be train, val or test'.format(type))
@@ -217,11 +225,12 @@ def test_dataset():
     i = 0
 
     for batch in final_dataloader:
-        if i > 3:
+        if i > 2:
             break
-        imgs = batch['img'][0]
+        imgs = batch['img']
         masks = batch['mask']
-        transforms.ToPILImage()(imgs).show()
+        for mask in masks:
+            transforms.ToPILImage()(mask).show()
         i += 1
 
 
