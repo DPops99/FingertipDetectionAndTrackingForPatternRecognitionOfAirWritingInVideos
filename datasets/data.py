@@ -208,6 +208,7 @@ class HGR1Dataset(Dataset):
 
         img = self.transform(img)
         mask = self.transform(mask)
+        mask = torch.logical_xor(mask, torch.full(mask.size(), 1.0)).float()
 
         return {'img': img, 'mask': mask}
 
@@ -218,19 +219,22 @@ class HGR1Dataset(Dataset):
 def test_dataset():
     hgr1_root = '/home/popa/Documents/diplomski_rad/FingertipDetectionAndTrackingForPatternRecognitionOfAirWritingInVideos/segmentation_dataset/hgr1'
     hof_root = '/home/popa/Documents/diplomski_rad/FingertipDetectionAndTrackingForPatternRecognitionOfAirWritingInVideos/segmentation_dataset/hand_over_face_corrected/hand_over_face'
-    list_datasets = [HGR1Dataset(root=hgr1_root, type='train'), HOFDataset(root=hof_root, type='train')]
-    final_dataset = ConcatDataset(list_datasets)
-    final_dataloader = DataLoader(final_dataset, batch_size=2, shuffle=True)
+    # list_datasets = [HGR1Dataset(root=hgr1_root, type='train'), HOFDataset(root=hof_root, type='train')]
+    # final_dataset = ConcatDataset(list_datasets)
+    # final_dataloader = DataLoader(final_dataset, batch_size=2, shuffle=True)
+    # dataloader = DataLoader(HOFDataset(hof_root, type='train'), batch_size=1, shuffle=True)
+    dataloader = DataLoader(HGR1Dataset(hgr1_root, type='train'), batch_size=2)
 
     i = 0
 
-    for batch in final_dataloader:
-        if i > 2:
+    for batch in dataloader:
+        if i > 0:
             break
         imgs = batch['img']
         masks = batch['mask']
         for mask in masks:
             transforms.ToPILImage()(mask).show()
+
         i += 1
 
 
