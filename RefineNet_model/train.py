@@ -12,8 +12,8 @@ def train(datapath, batch_size=2, num_classes=1, epochs=2, save_path='/content/d
     valid_dataset = HGR1Dataset(root=datapath, type='val', transform=None)
     train_dataloader = DataLoader(train_dataset, batch_size=batch_size)
     valid_dataloader = DataLoader(valid_dataset, batch_size=batch_size)
-    # criterion = torch.nn.MSELoss(reduction='mean')
-    criterion = dice_loss
+    criterion = torch.nn.MSELoss(reduction='mean')
+    # criterion = dice_loss
     model = rf101(num_classes=num_classes)
     model.to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
@@ -35,21 +35,12 @@ def train_one_epoch(model, optimizer, criterion, dataloader, epoch, device):
         masks = batch['mask'].to(device)
         optimizer.zero_grad()
         outputs = model(inputs)
-        # outputs = transforms.Resize(img_size, interpolation=transforms.InterpolationMode.BILINEAR)(outputs)
         for output,mask in zip(outputs,masks):
             output = transforms.Resize(img_size, interpolation=transforms.InterpolationMode.BILINEAR)(output)
-            # print('output size: {}'.format(output.size()))
-            # print('mask size: {}'.format(masks[0].size()))
             loss += criterion(
-                # F.interpolate(output, img_size, mode='bilinear', align_corners=False).squeeze(dim=0),
                 output,
                 mask
             )
-        # print('outputs:\n{}'.format(outputs))
-        # for output in outputs:
-        #     print('outputs size:\n{}'.format(output.size()))
-        #     # print('labels size:\n{}'.format(labels.size()))
-        #     transforms.ToPILImage()(output).show()
         total_loss += loss.item()
         loss.backward()
         optimizer.step()
@@ -72,10 +63,7 @@ def eval_one_epoch(model, criterion, dataloader, epoch, device):
             outputs = model(inputs)
         for output,mask in zip(outputs,masks):
             output = transforms.Resize(img_size, interpolation=transforms.InterpolationMode.BILINEAR)(output)
-            # print('output size: {}'.format(output.size()))
-            # print('mask size: {}'.format(masks[0].size()))
             loss += criterion(
-                # F.interpolate(output, img_size, mode='bilinear', align_corners=False).squeeze(dim=0),
                 output,
                 mask
             )
