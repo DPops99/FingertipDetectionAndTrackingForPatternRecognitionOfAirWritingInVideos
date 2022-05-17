@@ -23,7 +23,6 @@ def predict(model, dataloader,  device):
     img_size = dataloader.dataset.img_size
     for index, batch in enumerate(dataloader):
         if index < 3:
-            loss = 0.0
             inputs = batch['img'].to(device)
             masks = batch['mask'].to(device)
             with torch.no_grad():
@@ -39,22 +38,22 @@ def predict(model, dataloader,  device):
         else:
             break
 
-def inference():
-  device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-  model = rf101(num_classes=1)
-  model.load_state_dict(torch.load('/content/drive/MyDrive/refinenet_15.pt'))
-  model.to(device)
-  model.eval()
-  image = Image.open('/content/hgr1/hgr1_images/original_images/O_P_hgr1_id11_2.jpg')
-  image = transforms.ToTensor()(image).to(device)
-  image = torch.unsqueeze(image,dim=0)
-  image.to(device)
-  pred_mask = model(image)
-  pred_mask = transforms.Resize((371, 462), interpolation=transforms.InterpolationMode.BILINEAR)(pred_mask)
-  pred_mask = torch.squeeze(pred_mask,dim=0)
-  pred_mask = F.sigmoid(pred_mask)
-  pred_mask[pred_mask>=0.65]=1.0
-  pred_mask[pred_mask<0.65]=0.0
-  print(pred_mask)
-  out_mask = transforms.ToPILImage()(pred_mask)
-  out_mask.save('/content/O_P_hgr1_id11_2.jpg')
+def inference(model_path = '/content/drive/MyDrive/refinenet_15.pt', img_path='/content/hgr1/hgr1_images/original_images/O_P_hgr1_id11_2.jpg', save_path='/content/O_P_hgr1_id11_2.jpg'):
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model = rf101(num_classes=1)
+    model.load_state_dict(torch.load(model_path))
+    model.to(device)
+    model.eval()
+    image = Image.open(img_path)
+    image = transforms.ToTensor()(image).to(device)
+    image = torch.unsqueeze(image,dim=0)
+    image.to(device)
+    pred_mask = model(image)
+    pred_mask = transforms.Resize((371, 462), interpolation=transforms.InterpolationMode.BILINEAR)(pred_mask)
+    pred_mask = torch.squeeze(pred_mask,dim=0)
+    pred_mask = F.sigmoid(pred_mask)
+    pred_mask[pred_mask>=0.65]=1.0
+    pred_mask[pred_mask<0.65]=0.0
+    print(pred_mask)
+    out_mask = transforms.ToPILImage()(pred_mask)
+    out_mask.save(save_path)

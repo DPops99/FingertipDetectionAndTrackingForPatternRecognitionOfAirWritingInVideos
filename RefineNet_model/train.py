@@ -1,29 +1,44 @@
 import torch
-
+import json
 from RefineNet_model.model import *
 from datasets.data import *
 from torch.utils.data.dataloader import DataLoader
 import torch.nn.functional as F
 from losses import dice_loss
 
-def train(datapath, batch_size=2, num_classes=1, epochs=2, save_path='/content/drive/MyDrive/refinenet'):
+def train(datapath, batch_size=2, num_classes=1, epochs=2, save_path='/content/drive/MyDrive/refinenet', loss_type='mse'):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     train_dataset = HGR1Dataset(root=datapath, type='train', transform=None)
     valid_dataset = HGR1Dataset(root=datapath, type='val', transform=None)
     train_dataloader = DataLoader(train_dataset, batch_size=batch_size)
     valid_dataloader = DataLoader(valid_dataset, batch_size=batch_size)
-    criterion = torch.nn.MSELoss(reduction='mean')
-    # criterion = dice_loss
+    if loss_type == 'mse':
+        criterion = torch.nn.MSELoss(reduction='mean')
+    elif loss_type == 'bce':
+        criterion = torch.nn.BCEWithLogitsLoss()
+    elif loss_type == 'dice':
+        criterion = dice_loss
     model = rf101(num_classes=num_classes)
     model.to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
+    train_losses = []
+    val_losses = []
     for epoch in range(epochs):
         print('---------------------TRANING---------------------')
-        train_one_epoch(model=model, optimizer=optimizer, criterion=criterion, dataloader=train_dataloader, epoch=epoch, device=device)
+        train_loss = train_one_epoch(model=model, optimizer=optimizer, criterion=criterion, dataloader=train_dataloader, epoch=epoch, device=device)
         print('---------------------EVALUATION---------------------')
-        eval_one_epoch(model=model, criterion=criterion, dataloader=valid_dataloader, epoch=epoch, device=device)
+        val_loss = eval_one_epoch(model=model, criterion=criterion, dataloader=valid_dataloader, epoch=epoch, device=device)
 
-        torch.save(model.state_dict(), save_path + "_{}.pt".format(epoch + 1))
+        train_losses.append(train_loss)
+        val_losses.append(val_loss)
+        if (epoch+1)%5==0:
+            torch.save(model.state_dict(), save_path + "_{}.pt".format(epoch + 1))
+
+    with open('{}_losses.json'.format(save_path), 'w') as f:
+        json.dump({
+            'train_losses' : train_losses,
+            'val_losses' : val_losses
+        }, f)
 
 def train_one_epoch(model, optimizer, criterion, dataloader, epoch, device):
     model.train()
@@ -50,6 +65,7 @@ def train_one_epoch(model, optimizer, criterion, dataloader, epoch, device):
         index += 1
 
     print(f"Epoch {epoch+1} done, total loss: {total_loss/len(dataloader)}")
+    return total_loss
 
 def eval_one_epoch(model, criterion, dataloader, epoch, device):
     model.eval()
@@ -73,7 +89,8 @@ def eval_one_epoch(model, criterion, dataloader, epoch, device):
         index += 1
 
     print(f"Epoch {epoch+1} done, total loss: {total_loss/len(dataloader)}")
+    return total_loss
 
 if __name__=='__main__':
     datapath = '/home/popa/Documents/diplomski_rad/FingertipDetectionAndTrackingForPatternRecognitionOfAirWritingInVideos/segmentation_dataset/hgr1'
-    train(datapath=datapath, batch_size=8, num_classes=1, epochs=5)
+    train(datapath=datapath, batch_size=8, num_classes=1, epochs=15, loss_type='bce')
