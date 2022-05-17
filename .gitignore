@@ -9,4 +9,5 @@ seg_model.zip
 yolov5/
 runs/*
 runs_10s/*
+trained_models/*
 .idea

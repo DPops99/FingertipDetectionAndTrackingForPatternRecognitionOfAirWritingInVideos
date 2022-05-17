@@ -6,11 +6,10 @@ from torchvision.transforms import transforms
 import torch.nn.functional as F
 
 def eval_model():
-    datapath = '/content/hgr1'
     batch_size =1
     num_classes = 1
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    test_dataset = HGR1Dataset(root=datapath, type='test', transform=None)
+    test_dataset = get_dataset(type='test')
     test_dataloader = DataLoader(test_dataset, batch_size=batch_size)
     model = rf101(num_classes=num_classes)
     model.load_state_dict(torch.load('/content/drive/MyDrive/refinenet_15.pt'))

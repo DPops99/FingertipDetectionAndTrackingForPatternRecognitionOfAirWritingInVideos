@@ -6,10 +6,12 @@ from torch.utils.data.dataloader import DataLoader
 import torch.nn.functional as F
 from losses import dice_loss
 
-def train(datapath, batch_size=2, num_classes=1, epochs=2, save_path='/content/drive/MyDrive/refinenet', loss_type='mse'):
+def train(batch_size=2, num_classes=1, epochs=2, save_path='/content/drive/MyDrive/refinenet', loss_type='mse'):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    train_dataset = HGR1Dataset(root=datapath, type='train', transform=None)
-    valid_dataset = HGR1Dataset(root=datapath, type='val', transform=None)
+    # train_dataset = HGR1Dataset(root=datapath, type='train', transform=None)
+    # valid_dataset = HGR1Dataset(root=datapath, type='val', transform=None)
+    train_dataset = get_dataset(type='train')
+    valid_dataset = get_dataset(type='val')
     train_dataloader = DataLoader(train_dataset, batch_size=batch_size)
     valid_dataloader = DataLoader(valid_dataset, batch_size=batch_size)
     if loss_type == 'mse':
@@ -93,4 +95,4 @@ def eval_one_epoch(model, criterion, dataloader, epoch, device):
 
 if __name__=='__main__':
     datapath = '/home/popa/Documents/diplomski_rad/FingertipDetectionAndTrackingForPatternRecognitionOfAirWritingInVideos/segmentation_dataset/hgr1'
-    train(datapath=datapath, batch_size=8, num_classes=1, epochs=15, loss_type='bce')
+    train(batch_size=8, num_classes=1, epochs=15, loss_type='bce')

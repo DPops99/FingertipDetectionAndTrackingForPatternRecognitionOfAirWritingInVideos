@@ -217,6 +217,18 @@ class HGR1Dataset(Dataset):
     def __len__(self):
         return len(self.paths)
 
+def get_dataset(type, requested_dataset=None):
+    hgr1_root = '/content/hgr1'
+    hof_root = '/content/hand_over_face_corrected/hand_over_face'
+    eyth_root = '/content/eyth_dataset'
+    list_datasets = []
+    if requested_dataset is None:
+        list_datasets = [HGR1Dataset(root=hgr1_root, type=type),
+                         HOFDataset(root=hof_root, type=type),
+                         EgoYouTubeHandsDataset(root=eyth_root, type=type)
+                         ]
+    return ConcatDataset(list_datasets)
+
 
 def test_dataset():
     hgr1_root = '/home/popa/Documents/diplomski_rad/FingertipDetectionAndTrackingForPatternRecognitionOfAirWritingInVideos/segmentation_dataset/hgr1'
