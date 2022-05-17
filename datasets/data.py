@@ -197,9 +197,11 @@ class HGR1Dataset(Dataset):
             self.transform = transform
 
     def __getitem__(self, item):
-        path = self.paths[item].replace('.jpg', '')
-        img_path = os.path.join(self.root, 'hgr1_images', 'original_images', '{}.jpg'.format(path))
-        mask_path = os.path.join(self.root, 'hgr1_skin', 'skin_masks', '{}.bmp'.format(path))
+        path = self.paths[item]
+        img_path = os.path.join(self.root, 'hgr1_images', 'original_images', '{}'.format(path))
+        path = path.replace('.jpg', '.bmp')
+        path = path.replace('.JPG', '.bmp')
+        mask_path = os.path.join(self.root, 'hgr1_skin', 'skin_masks', '{}'.format(path))
 
         img = Image.open(img_path).convert('RGB')
         mask = Image.open(mask_path).convert('L')
@@ -236,8 +238,6 @@ def test_dataset():
             transforms.ToPILImage()(mask).show()
 
         i += 1
-
-
 
 
 

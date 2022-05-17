@@ -89,7 +89,7 @@ class Bottleneck(nn.Module):
 
 class RefineNet(nn.Module):
 
-    def __init__(self, block, layers, num_classes=1):
+    def __init__(self, block, layers, num_classes):
         self.inplanes = 64
         super(RefineNet, self).__init__()
         self.do = nn.Dropout(p=0.5)
