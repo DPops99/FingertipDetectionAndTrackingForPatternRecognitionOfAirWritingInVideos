@@ -1,8 +1,10 @@
+import numpy as np
 import torch
 from torch.utils.data import Dataset, ConcatDataset, DataLoader
 import os
 from PIL import Image
 from torchvision.transforms import transforms
+from RefineNet_model.custom_transforms import *
 
 class EgoHandsDataset(Dataset):
     def __init__(self):
@@ -25,10 +27,11 @@ class EgoYouTubeHandsDataset(Dataset):
         with open(os.path.join(root, 'train-val-test-split','{}.txt'.format(type))) as f:
             self.paths = f.readlines()
         if transform is None:
-            self.transform = transforms.Compose([
-                transforms.Resize(self.img_size),
-                transforms.ToTensor()
-            ])
+            # self.transform = transforms.Compose([
+            #     transforms.Resize(self.img_size),
+            #     transforms.ToTensor()
+            # ])
+            self.transform = transforms.Compose(get_transformations())
         else:
             self.transform = transform
 
@@ -42,10 +45,13 @@ class EgoYouTubeHandsDataset(Dataset):
 
         #ADD TRANSFORMATIONS !!!!!!!!!
 
-        img = self.transform(img)
-        mask = self.transform(mask)
+        # img = self.transform(img)
+        # mask = self.transform(mask)
 
-        return {'img': img, 'mask': mask}
+        sample = {'img': img, 'mask': mask}
+        sample = self.transform(sample)
+
+        return sample
 
     def __len__(self):
         return len(self.paths)
@@ -65,10 +71,11 @@ class FreiHANDDataset(Dataset):
         else:
             self.paths = self.paths[int(0.9 * size):]
         if transform is None:
-            self.transform = transforms.Compose([
-                transforms.Resize(self.img_size),
-                transforms.ToTensor()
-            ])
+            # self.transform = transforms.Compose([
+            #     transforms.Resize(self.img_size),
+            #     transforms.ToTensor()
+            # ])
+            self.transform = transforms.Compose(get_transformations())
         else:
             self.transform = transform
 
@@ -83,10 +90,13 @@ class FreiHANDDataset(Dataset):
 
         # ADD TRANSFORMATIONS !!!!!!!!!
 
-        img = self.transform(img)
-        mask = self.transform(mask)
+        # img = self.transform(img)
+        # mask = self.transform(mask)
 
-        return {'img': img, 'mask': mask}
+        sample = {'img': img, 'mask': mask}
+        sample = self.transform(sample)
+
+        return sample
 
     def __len__(self):
         return len(self.paths)
@@ -107,10 +117,11 @@ class HOFDataset(Dataset):
         else:
             self.paths = self.paths[int(0.9 * size):]
         if transform is None:
-            self.transform = transforms.Compose([
-                transforms.Resize(self.img_size),
-                transforms.ToTensor()
-            ])
+            # self.transform = transforms.Compose([
+            #     transforms.Resize(self.img_size),
+            #     transforms.ToTensor()
+            # ])
+            self.transform = transforms.Compose(get_transformations())
         else:
             self.transform = transform
 
@@ -124,10 +135,13 @@ class HOFDataset(Dataset):
 
         #ADD TRANSFORMATIONS !!!!!!!!!
 
-        img = self.transform(img)
-        mask = self.transform(mask)
+        # img = self.transform(img)
+        # mask = self.transform(mask)
 
-        return {'img': img, 'mask': mask}
+        sample = {'img': img, 'mask': mask}
+        sample = self.transform(sample)
+
+        return sample
 
     def __len__(self):
         return len(self.paths)
@@ -147,10 +161,11 @@ class EGTEAGazePlusDataset(Dataset):
         else:
             self.paths = self.paths[int(0.9 * size):]
         if transform is None:
-            self.transform = transforms.Compose([
-                transforms.Resize(self.img_size),
-                transforms.ToTensor()
-            ])
+            # self.transform = transforms.Compose([
+            #     transforms.Resize(self.img_size),
+            #     transforms.ToTensor()
+            # ])
+            self.transform = transforms.Compose(get_transformations())
         else:
             self.transform = transform
 
@@ -164,10 +179,13 @@ class EGTEAGazePlusDataset(Dataset):
 
         # ADD TRANSFORMATIONS !!!!!!!!!
 
-        img = self.transform(img)
-        mask = self.transform(mask)
+        # img = self.transform(img)
+        # mask = self.transform(mask)
 
-        return {'img': img, 'mask': mask}
+        sample = {'img': img, 'mask': mask}
+        sample = self.transform(sample)
+
+        return sample
 
 
     def __len__(self):
@@ -189,10 +207,12 @@ class HGR1Dataset(Dataset):
         else:
             self.paths = self.paths[int(0.9 * size):]
         if transform is None:
-            self.transform = transforms.Compose([
-                transforms.Resize(self.img_size),
-                transforms.ToTensor()
-            ])
+            # self.transform = transforms.Compose([
+            #     transforms.Resize(self.img_size),
+            #     CustomRandomRotate(),
+            #     transforms.ToTensor()
+            # ])
+            self.transform = transforms.Compose(get_transformations())
         else:
             self.transform = transform
 
@@ -205,14 +225,21 @@ class HGR1Dataset(Dataset):
 
         img = Image.open(img_path).convert('RGB')
         mask = Image.open(mask_path).convert('L')
-
         # ADD TRANSFORMATIONS !!!!!!!!!
 
-        img = self.transform(img)
-        mask = self.transform(mask)
-        mask = torch.logical_xor(mask, torch.full(mask.size(), 1.0)).float()
+        # img = self.transform(img)
+        # mask = self.transform(mask)
+        mask_array = np.array(mask)
+        mask = np.logical_xor(mask_array, np.ones(mask_array.shape)).astype(float)
+        mask = Image.fromarray(mask)
 
-        return {'img': img, 'mask': mask}
+        sample = {'img': img, 'mask': mask}
+
+        # sample['mask'] = torch.logical_xor(sample['mask'], torch.full(sample['mask'].size(), 1.0)).float()
+        sample = self.transform(sample)
+
+
+        return sample
 
     def __len__(self):
         return len(self.paths)
@@ -233,20 +260,21 @@ def get_dataset(type, requested_dataset=None):
 def test_dataset():
     hgr1_root = '/home/popa/Documents/diplomski_rad/FingertipDetectionAndTrackingForPatternRecognitionOfAirWritingInVideos/segmentation_dataset/hgr1'
     hof_root = '/home/popa/Documents/diplomski_rad/FingertipDetectionAndTrackingForPatternRecognitionOfAirWritingInVideos/segmentation_dataset/hand_over_face_corrected/hand_over_face'
-    # list_datasets = [HGR1Dataset(root=hgr1_root, type='train'), HOFDataset(root=hof_root, type='train')]
-    # final_dataset = ConcatDataset(list_datasets)
-    # final_dataloader = DataLoader(final_dataset, batch_size=2, shuffle=True)
+    list_datasets = [HGR1Dataset(root=hgr1_root, type='train'), HOFDataset(root=hof_root, type='train')]
+    final_dataset = ConcatDataset(list_datasets)
+    final_dataloader = DataLoader(final_dataset, batch_size=4, shuffle=True)
     # dataloader = DataLoader(HOFDataset(hof_root, type='train'), batch_size=1, shuffle=True)
-    dataloader = DataLoader(HGR1Dataset(hgr1_root, type='train'), batch_size=2)
+    # dataloader = DataLoader(HGR1Dataset(hgr1_root, type='train'), batch_size=2)
 
     i = 0
 
-    for batch in dataloader:
+    for batch in final_dataloader:
         if i > 0:
             break
         imgs = batch['img']
         masks = batch['mask']
-        for mask in masks:
+        for img, mask in zip(imgs,masks):
+            transforms.ToPILImage()(img).show()
             transforms.ToPILImage()(mask).show()
 
         i += 1

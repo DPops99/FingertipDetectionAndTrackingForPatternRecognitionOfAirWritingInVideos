@@ -22,5 +22,6 @@ def create_loss_report():
         key, value = loss_item
         plot_loss(loss=value, type=key, save_path=save_path)
 
+
 if __name__=='__main__':
     create_loss_report()

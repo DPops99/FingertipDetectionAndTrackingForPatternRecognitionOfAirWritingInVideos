@@ -11,3 +11,4 @@ runs/*
 runs_10s/*
 trained_models/*
 .idea
+webcam_data/*

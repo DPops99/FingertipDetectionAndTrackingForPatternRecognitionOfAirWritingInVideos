@@ -259,4 +259,33 @@ Epoch 9 19/48 current loss: 1.9035684496164322
 Epoch 9 29/48 current loss: 1.5743267834186554
 Epoch 9 39/48 current loss: 1.4023505017161368
 Epoch 9 done, total loss: 1.2867196295410395
+---------------------TRANING---------------------
+Epoch 10 9/217 current loss: 1.2045085847377777
+Epoch 10 19/217 current loss: 0.9548965990543365
+Epoch 10 29/217 current loss: 0.7873528649409612
+Epoch 10 39/217 current loss: 0.7355822719633579
+Epoch 10 49/217 current loss: 0.703521169424057
+Epoch 10 59/217 current loss: 0.6732577323913574
+Epoch 10 69/217 current loss: 0.6366246828011104
+Epoch 10 79/217 current loss: 0.6024428449571133
+Epoch 10 89/217 current loss: 0.5844997025198406
+Epoch 10 99/217 current loss: 0.7487730351090431
+Epoch 10 109/217 current loss: 0.8623503828590566
+Epoch 10 119/217 current loss: 0.9248311969141165
+Epoch 10 129/217 current loss: 0.9380986958742141
+Epoch 10 139/217 current loss: 0.9429464082632746
+Epoch 10 149/217 current loss: 0.9392224484682083
+Epoch 10 159/217 current loss: 0.9431479750201106
+Epoch 10 169/217 current loss: 0.9427466383751701
+Epoch 10 179/217 current loss: 0.9391301931606398
+Epoch 10 189/217 current loss: 0.9447774913750197
+Epoch 10 199/217 current loss: 0.9476090104877949
+Epoch 10 209/217 current loss: 0.9448124492452258
+Epoch 10 done, total loss: 0.9395712121016419
+---------------------EVALUATION---------------------
+Epoch 10 9/48 current loss: 2.5428659439086916
+Epoch 10 19/48 current loss: 1.9732916593551635
+Epoch 10 29/48 current loss: 1.624566380182902
+Epoch 10 39/48 current loss: 1.4429915308952332
+Epoch 10 done, total loss: 1.3216118061294158
 
