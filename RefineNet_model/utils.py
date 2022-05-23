@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import json
+import os
 
 def plot_loss(loss, type, save_path):
     x = [x for x in range(len(loss))]
@@ -15,11 +16,17 @@ def load_losses(losses_path):
     return losses
 
 def create_loss_report():
-    losses_path = '/segmentation_model_results/RefineNet/MSELoss_15_epochs_first_try/refinenet_losses_mse_hgr_only_lr_1e-4.json'
-    save_paths = ['refinenet_train_losses_mse_hgr_only.jpg', 'refinenet_val_losses_mse_hgr_only.jpg']
+    losses_path = '/home/popa/Documents/diplomski_rad/FingertipDetectionAndTrackingForPatternRecognitionOfAirWritingInVideos/segmentation_model_results/RefineNet/BCELoss_50_epochs_hgr1_only/final_model_losses.json'
+    save_root = '/home/popa/Documents/diplomski_rad/FingertipDetectionAndTrackingForPatternRecognitionOfAirWritingInVideos/segmentation_model_results/RefineNet/BCELoss_50_epochs_hgr1_only'
+    save_paths = [os.path.join(save_root,'train_losses.jpg'), os.path.join(save_root,'valid_losses.jpg')]
     losses = load_losses(losses_path=losses_path)
     for loss_item, save_path in zip(losses.items(), save_paths):
         key, value = loss_item
+        print(type(value))
+        # if key == 'train_losses':
+        #     value = [x for x in value]
+        # else:
+        #     value = [x for x in value]
         plot_loss(loss=value, type=key, save_path=save_path)
 
 

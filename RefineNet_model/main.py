@@ -1,11 +1,4 @@
-import numpy as np
-import torch
-
-def test():
-    x = torch.tensor(0.0)
-    print(x)
-    x += torch.tensor(5.0)
-    print(x)
+from train import *
 
 if __name__=='__main__':
-    test()
+    train(batch_size=8, num_classes=1, epochs=100, loss_type='bce')

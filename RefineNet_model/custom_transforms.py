@@ -56,15 +56,11 @@ class Resize(object):
 def get_transformations():
     transform_list = []
     img_size = (371, 462)
-    kernel_size = 11
+    kernel_size = 5
     transform_list.append(Resize(img_size))
-    if random.randint(0,1) == 0:
-        transform_list.append(VerticalFlip())
-    if random.randint(0, 1) == 0:
-        transform_list.append(HorizontalFlip())
-    if random.randint(0, 1) == 0:
-        transform_list.append(RandomRotate())
-
+    transform_list.append(VerticalFlip())
+    transform_list.append(HorizontalFlip())
+    transform_list.append(RandomRotate())
     transform_list.append(GaussianBlur(kernel_size))
     transform_list.append(ToTensor())
 

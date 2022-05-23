@@ -58,7 +58,7 @@ def inference(device, img_path='/content/hgr1/hgr1_images/original_images/O_P_hg
 
 if __name__=='__main__':
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model_path = '/home/popa/Documents/diplomski_rad/FingertipDetectionAndTrackingForPatternRecognitionOfAirWritingInVideos/trained_models/refinenet_15_bce_hgr_only.pt'
+    model_path = '/home/popa/Documents/diplomski_rad/FingertipDetectionAndTrackingForPatternRecognitionOfAirWritingInVideos/trained_models/final_model_50.pt'
     model = rf101(num_classes=1)
     model.load_state_dict(torch.load(model_path, map_location=device))
     model.to(device)
