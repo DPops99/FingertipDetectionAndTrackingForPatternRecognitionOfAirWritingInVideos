@@ -6,7 +6,7 @@ from RefineNet_model.model import *
 from datasets.data import *
 from torch.utils.data.dataloader import DataLoader
 import torch.nn.functional as F
-from losses import dice_loss
+from RefineNet_model.losses import dice_loss
 
 
 def train(batch_size=2, num_classes=1, epochs=2, save_path='/content/drive/MyDrive/refinenet', loss_type='bse', checkpoint_path=None):

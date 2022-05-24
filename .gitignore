@@ -12,3 +12,5 @@ runs_10s/*
 trained_models/*
 .idea
 webcam_data/*
+yolov5_best_model/*
+fingertip_detection/yolov5s.pt

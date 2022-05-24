@@ -16,8 +16,8 @@ def load_losses(losses_path):
     return losses
 
 def create_loss_report():
-    losses_path = '/home/popa/Documents/diplomski_rad/FingertipDetectionAndTrackingForPatternRecognitionOfAirWritingInVideos/segmentation_model_results/RefineNet/BCELoss_50_epochs_hgr1_only/final_model_losses.json'
-    save_root = '/home/popa/Documents/diplomski_rad/FingertipDetectionAndTrackingForPatternRecognitionOfAirWritingInVideos/segmentation_model_results/RefineNet/BCELoss_50_epochs_hgr1_only'
+    losses_path = '/home/popa/Documents/diplomski_rad/FingertipDetectionAndTrackingForPatternRecognitionOfAirWritingInVideos/segmentation_model_results/RefineNet/BCELoss_100_epochs_hgr1_only/final_model_losses.json'
+    save_root = '/home/popa/Documents/diplomski_rad/FingertipDetectionAndTrackingForPatternRecognitionOfAirWritingInVideos/segmentation_model_results/RefineNet/BCELoss_100_epochs_hgr1_only'
     save_paths = [os.path.join(save_root,'train_losses.jpg'), os.path.join(save_root,'valid_losses.jpg')]
     losses = load_losses(losses_path=losses_path)
     for loss_item, save_path in zip(losses.items(), save_paths):

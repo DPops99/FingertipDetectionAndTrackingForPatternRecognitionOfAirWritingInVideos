@@ -246,8 +246,10 @@ class HGR1Dataset(Dataset):
     def __len__(self):
         return len(self.paths)
 
-def get_dataset(type, requested_dataset=None):
+def get_dataset(type, requested_dataset=None, hgr1_only=False):
     hgr1_root = '/content/hgr1'
+    if hgr1_only:
+        return HGR1Dataset(root=hgr1_root, type=type)
     hof_root = '/content/hand_over_face_corrected/hand_over_face'
     eyth_root = '/content/eyth_dataset'
     list_datasets = []
