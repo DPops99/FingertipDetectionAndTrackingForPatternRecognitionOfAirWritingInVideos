@@ -1,7 +1,8 @@
 import cv2
 
-tracker = cv2.TrackerKCF_create()
-video = cv2.VideoCapture(1)
+
+tracker = cv2.TrackerCSRT_create()
+video = cv2.VideoCapture(0)
 
 while True:
     k,frame = video.read()

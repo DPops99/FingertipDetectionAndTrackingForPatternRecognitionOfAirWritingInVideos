@@ -96,7 +96,7 @@ def signature(mask,image_real):
     for point in real_fingertips:
         cv2.circle(mask, point[0], 3, (255, 0, 0), -1)
         cv2.circle(image_real, point[0], 3, (255, 0, 0), -1)
-    # cv2.imshow('mask',mask)
+    cv2.imshow('mask',mask)
     cv2.imshow('image_real',image_real)
     cv2.waitKey()
 
@@ -153,16 +153,18 @@ def get_fingertip_indicies(fingertips, contour):
     return fingertip_indicies
 
 
-def get_yolo_pic():
+def get_yolo_pic(img_path):
     model_path = '/home/popa/Documents/diplomski_rad/FingertipDetectionAndTrackingForPatternRecognitionOfAirWritingInVideos/yolov5_best_model/best.pt'
     model = torch.hub.load('/home/popa/Documents/diplomski_rad/FingertipDetectionAndTrackingForPatternRecognitionOfAirWritingInVideos/yolov5', 'custom',
                            path=model_path,
                            source='local')
-    img = '/home/popa/Pictures/Webcam/2022-01-19-215301_3.jpg'
-    output = model(img)
+    # img = '/home/popa/Pictures/Webcam/2022-01-19-215301_3.jpg'
+    output = model(img_path)
     hands = []
     for hand in output.crop(save=False):
         hands.append(cv2.cvtColor(hand['im'], cv2.COLOR_BGR2RGB))
+        # cv2.imshow('img',cv2.cvtColor(hand['im'], cv2.COLOR_BGR2RGB))
+        # cv2.waitKey()
     # img = output.crop(save=False)[0]['im']
     # img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     # cv2.imshow('img', img)
@@ -205,7 +207,8 @@ def get_segmented_hand(image):
 
 
 def detect_fingers():
-    hands = get_yolo_pic()
+    img_path = '/home/popa/Pictures/Webcam/2022-01-05-154447.jpg'
+    hands = get_yolo_pic(img_path=img_path)
     for hand in hands:
         mask = get_segmented_hand(image=hand)
         signature(mask=mask, image_real=hand)
