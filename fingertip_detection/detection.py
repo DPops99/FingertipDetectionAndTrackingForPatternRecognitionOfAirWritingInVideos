@@ -13,7 +13,6 @@ def get_image(image_path):
     return cv2.imread(image_path)
 
 def get_hand_center(mask):
-    mask_rgb = cv2.cvtColor(mask, cv2.COLOR_BGR2RGB)
     gray = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
     contours, hierarchy = cv2.findContours(gray, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     print('len of contours: {}'.format(len(contours)))
@@ -34,12 +33,7 @@ def get_contour(mask):
     print(gray.shape)
     print(np.array(gray).shape)
     _,thresh = cv2.threshold(gray,200,255, cv2.THRESH_BINARY)
-    # for x in gray:
-    #     for y in x:
-    #         if y != 0:
-    #             y = 255
     contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    # print('len of contours: {}'.format(len(contours)))
     largest_contour = contours[0]
     for index, contour in enumerate(contours):
         print('len: {}'.format(len(contour)))
@@ -74,78 +68,35 @@ def get_hand_center(contour):
     center_Y = int(M["m01"] / M["m00"])
     return (center_X, center_Y)
 
-def signature(mask):
+def signature(mask,image_real):
 
-    # mask = 255*(np.logical_xor(mask, np.ones(mask.shape)).astype('uint8'))
     contour, contours, hierarchy = get_contour(mask)
     hull = get_hull(contour)
     defects = get_defects(contour,hull)
     far_points, far_indicies = get_far_points(contour, defects)
     hand_center = get_hand_center(contour)
-    distances = []
-    distance = []
-    all_dist = []
-    hull_distances = []
-    fingertip_indicies = []
-    fingertip_points = []
 
-    # #SEPERATE CONTOURS BY DEFECT POINTS
-    # for index, point in enumerate(contour):
-    #     distance.append(math.dist(hand_center, point[0]))
-    #     # all_dist.append(math.dist(hand_center, point[0]))
-    #     for far_point in far_points:
-    #         if np.array_equal(far_point, point[0]):
-    #             distances.append(distance)
-    #             # max_index = get_max_value_index(distance)
-    #             # for dist in distances[:-1]:
-    #             #     max_index += len(dist)
-    #             # fingertip = contour[max_index]
-    #             # fingertip_points.append(fingertip)
-    #             distance = []
-    #             fingertip_indicies.append(index)
-    #             break
-
-
-    distances.append(distance)
     real_finger_contours = get_finger_contours(contour=contour, far_indicies=far_indicies)
     fixed_finger_contours = fix_finger_contours(finger_contours=real_finger_contours)
     real_distences = get_finget_contour_dist(hand_center=hand_center, finger_contours=fixed_finger_contours)
     real_fingertips = get_fingertips(finger_contour_dist=real_distences, finger_contour=fixed_finger_contours)
-    real_fingertip_indicies = get_fingertip_indicies(fingertips=real_fingertips, contour=contour)
-
-    print(fingertip_points)
-    print(real_fingertips)
-    # print(distances)
-    # max_point = contour[np.argmax(distances)]
-    # print(max_point)
-    # fig, axs = plt.subplots(len(distances))
-    # for index, dist in enumerate(distances):
-    #     x = [i for i in range(len(dist))]
-    #     axs[index].plot(x,dist)
-    # plt.show()
-    # plt.clf()
 
     # fig, axs = plt.subplots(len(real_distences))
     # for index, dist in enumerate(real_distences):
     #     x = [i for i in range(len(dist))]
-    #     axs[index].plot(x, dist)
+    #     axs[index].plot(x,dist)
     # plt.show()
 
-
+    # image_real = get_image('/home/popa/Documents/diplomski_rad/FingertipDetectionAndTrackingForPatternRecognitionOfAirWritingInVideos/fingertip_detection/runs/detect/exp3/crops/hand/2022-01-19-215301_3.jpg')
+    image_real = cv2.cvtColor(image_real,cv2.COLOR_BGR2RGB)
     cv2.drawContours(mask, [contour], -1, (0, 255, 0), 3)
-    # cv2.drawContours(mask, [hull], -1, (0, 0, 255), 3)
     cv2.circle(mask, hand_center, 1, (0, 0, 255), -1)
     for point in far_points:
         cv2.circle(mask, point, 3, (0, 0, 255), -1)
     for point in real_fingertips:
         cv2.circle(mask, point[0], 3, (255, 0, 0), -1)
-    # cv2.circle(mask, max_point[0], 5, (255, 0, 0), -1)
-    # for i in range(len(contours)):
-    #     color = (random.randint(0, 256), random.randint(0, 256), random.randint(0, 256))
-    #     cv2.drawContours(mask, contours, i, color, 2, cv2.LINE_8, hierarchy, 0)
-    cv2.imshow('mask',mask)
-    image_real = get_image('/home/popa/Documents/diplomski_rad/FingertipDetectionAndTrackingForPatternRecognitionOfAirWritingInVideos/fingertip_detection/runs/detect/exp3/crops/hand/2022-01-19-215301_3.jpg')
-    # cv2.circle(image_real, max_point[0], 5, (255, 0, 0), -1)
+        cv2.circle(image_real, point[0], 3, (255, 0, 0), -1)
+    # cv2.imshow('mask',mask)
     cv2.imshow('image_real',image_real)
     cv2.waitKey()
 
@@ -171,11 +122,6 @@ def get_finger_contours(contour, far_indicies):
         finger_contours.append(contour[current_far_index:next_far_index])
 
     last_index = far_indicies[-1]
-    # last_contour = []
-    # last_contour = list(contour[last_index:])
-    # last_contour.extend(contour[:far_indicies[0]])
-    first = contour[last_index:]
-    last = contour[:far_indicies[0]]
     last_contour = np.concatenate((contour[last_index:], contour[:far_indicies[0]]))
     finger_contours.append(last_contour)
 
@@ -210,16 +156,21 @@ def get_fingertip_indicies(fingertips, contour):
 def get_yolo_pic():
     model_path = '/home/popa/Documents/diplomski_rad/FingertipDetectionAndTrackingForPatternRecognitionOfAirWritingInVideos/yolov5_best_model/best.pt'
     model = torch.hub.load('/home/popa/Documents/diplomski_rad/FingertipDetectionAndTrackingForPatternRecognitionOfAirWritingInVideos/yolov5', 'custom',
-                           path='/home/popa/Documents/diplomski_rad/FingertipDetectionAndTrackingForPatternRecognitionOfAirWritingInVideos/yolov5_best_model/best.pt',
+                           path=model_path,
                            source='local')
-    # model.load_state_dict(torch.load(model_path, map_location='cpu')['model'].state_dict())
-    # model = model.fuse().autoshape()
     img = '/home/popa/Pictures/Webcam/2022-01-19-215301_3.jpg'
     output = model(img)
-    print(output)
-    output.crop()
+    hands = []
+    for hand in output.crop(save=False):
+        hands.append(cv2.cvtColor(hand['im'], cv2.COLOR_BGR2RGB))
+    # img = output.crop(save=False)[0]['im']
+    # img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    # cv2.imshow('img', img)
+    # cv2.waitKey()
+    return hands
 
-def get_segmented_hand():
+
+def get_segmented_hand(image):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     # SET UP MODEL
     model_path = '/home/popa/Documents/diplomski_rad/FingertipDetectionAndTrackingForPatternRecognitionOfAirWritingInVideos/trained_models/final_model_100.pt'
@@ -229,8 +180,9 @@ def get_segmented_hand():
     model.eval()
 
     # SET UP IMAGE
-    img_path = '/home/popa/Documents/diplomski_rad/FingertipDetectionAndTrackingForPatternRecognitionOfAirWritingInVideos/fingertip_detection/runs/detect/exp3/crops/hand/2022-01-19-215301_3.jpg'
-    image = Image.open(img_path).convert('RGB')
+    # img_path = '/home/popa/Documents/diplomski_rad/FingertipDetectionAndTrackingForPatternRecognitionOfAirWritingInVideos/fingertip_detection/runs/detect/exp3/crops/hand/2022-01-19-215301_3.jpg'
+    # image = Image.open(img_path).convert('RGB')
+    image = Image.fromarray(image).convert('RGB')
     image = transforms.ToTensor()(image).to(device)
     image = torch.unsqueeze(image, dim=0)
     image.to(device)
@@ -245,29 +197,18 @@ def get_segmented_hand():
     pred_mask[pred_mask<0.5]=0.0
     print(pred_mask)
     out_mask = transforms.ToPILImage()(pred_mask)
-    out_mask.show()
-    out_mask.save(img_path.replace('.jpg','_segmented.jpg'))
+    # out_mask.show()
+    out_mask = np.asarray(out_mask)
+    out_mask = cv2.cvtColor(out_mask, cv2.COLOR_GRAY2BGR)
+    # out_mask.save(img_path.replace('.jpg','_segmented.jpg'))
+    return out_mask
 
-def test_cv2_thresh():
-    img_path = '/home/popa/Documents/diplomski_rad/FingertipDetectionAndTrackingForPatternRecognitionOfAirWritingInVideos/fingertip_detection/runs/detect/exp3/crops/hand/2022-01-19-215301_3.jpg'
-    img = cv2.imread(img_path)
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    ret, thresh = cv2.threshold(img, 190, 255, cv2.THRESH_BINARY)
-    print(thresh)
-    cv2.imshow('thresh',thresh)
-    cv2.imshow('img',img)
-    contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    contours = max(contours, key=lambda x: cv2.contourArea(x))
-    cv2.drawContours(thresh, [contours], -1, (255, 255, 0), 2)
-    cv2.imshow("contours", img)
-    cv2.waitKey(0)
 
+def detect_fingers():
+    hands = get_yolo_pic()
+    for hand in hands:
+        mask = get_segmented_hand(image=hand)
+        signature(mask=mask, image_real=hand)
 
 if __name__=='__main__':
-    image_path = '/home/popa/Documents/diplomski_rad/FingertipDetectionAndTrackingForPatternRecognitionOfAirWritingInVideos/fingertip_detection/runs/detect/exp3/crops/hand/2022-01-19-215301_3_segmented.jpg'
-    image = get_image(image_path)
-    signature(image)
-    # get_segmented_hand()
-    # get_yolo_pic()
-
-    # test_cv2_thresh()
+    detect_fingers()
