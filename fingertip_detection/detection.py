@@ -76,10 +76,13 @@ def signature(mask,image_real):
     far_points, far_indicies = get_far_points(contour, defects)
     hand_center = get_hand_center(contour)
 
-    real_finger_contours = get_finger_contours(contour=contour, far_indicies=far_indicies)
-    fixed_finger_contours = fix_finger_contours(finger_contours=real_finger_contours)
-    real_distences = get_finget_contour_dist(hand_center=hand_center, finger_contours=fixed_finger_contours)
-    real_fingertips = get_fingertips(finger_contour_dist=real_distences, finger_contour=fixed_finger_contours)
+    if len(far_indicies) != 0:
+        real_finger_contours = get_finger_contours(contour=contour, far_indicies=far_indicies)
+        fixed_finger_contours = fix_finger_contours(finger_contours=real_finger_contours)
+        real_distences = get_finget_contour_dist(hand_center=hand_center, finger_contours=fixed_finger_contours)
+        real_fingertips = get_fingertips(finger_contour_dist=real_distences, finger_contour=fixed_finger_contours)
+    else:
+        real_fingertips = []
 
     # fig, axs = plt.subplots(len(real_distences))
     # for index, dist in enumerate(real_distences):
@@ -88,17 +91,20 @@ def signature(mask,image_real):
     # plt.show()
 
     # image_real = get_image('/home/popa/Documents/diplomski_rad/FingertipDetectionAndTrackingForPatternRecognitionOfAirWritingInVideos/fingertip_detection/runs/detect/exp3/crops/hand/2022-01-19-215301_3.jpg')
-    image_real = cv2.cvtColor(image_real,cv2.COLOR_BGR2RGB)
-    cv2.drawContours(mask, [contour], -1, (0, 255, 0), 3)
-    cv2.circle(mask, hand_center, 1, (0, 0, 255), -1)
-    for point in far_points:
-        cv2.circle(mask, point, 3, (0, 0, 255), -1)
-    for point in real_fingertips:
-        cv2.circle(mask, point[0], 3, (255, 0, 0), -1)
-        cv2.circle(image_real, point[0], 3, (255, 0, 0), -1)
-    cv2.imshow('mask',mask)
-    cv2.imshow('image_real',image_real)
-    cv2.waitKey()
+    # image_real = cv2.cvtColor(image_real,cv2.COLOR_BGR2RGB)
+    # cv2.drawContours(mask, [contour], -1, (0, 255, 0), 3)
+    # cv2.circle(mask, hand_center, 1, (0, 0, 255), -1)
+    # for point in far_points:
+    #     cv2.circle(mask, point, 3, (0, 0, 255), -1)
+    # for point in real_fingertips:
+    #     if len(point) != 0:
+    #         cv2.circle(mask, point[0], 3, (255, 0, 0), -1)
+    #         cv2.circle(image_real, point[0], 3, (255, 0, 0), -1)
+    # cv2.imshow('mask',mask)
+    # cv2.imshow('image_real',image_real)
+    # cv2.waitKey()
+
+    return real_fingertips
 
 def get_longest_distance(distances):
     return max(distances, key= lambda x:len(x))
@@ -121,6 +127,7 @@ def get_finger_contours(contour, far_indicies):
         next_far_index = far_indicies[index+1]
         finger_contours.append(contour[current_far_index:next_far_index])
 
+
     last_index = far_indicies[-1]
     last_contour = np.concatenate((contour[last_index:], contour[:far_indicies[0]]))
     finger_contours.append(last_contour)
@@ -139,8 +146,11 @@ def get_finget_contour_dist(hand_center, finger_contours):
 def get_fingertips(finger_contour_dist, finger_contour):
     fingertips = []
     for finger_dist, finger in zip(finger_contour_dist, finger_contour):
-        contour_dist_index = np.argmax(finger_dist)
-        fingertips.append(finger[contour_dist_index])
+        if len(finger_dist) == 0:
+            fingertips.append([])
+        else:
+            contour_dist_index = np.argmax(finger_dist)
+            fingertips.append(finger[contour_dist_index])
     return fingertips
 
 def get_fingertip_indicies(fingertips, contour):
@@ -153,11 +163,12 @@ def get_fingertip_indicies(fingertips, contour):
     return fingertip_indicies
 
 
-def get_yolo_pic(img_path):
-    model_path = '/home/popa/Documents/diplomski_rad/FingertipDetectionAndTrackingForPatternRecognitionOfAirWritingInVideos/yolov5_best_model/best.pt'
-    model = torch.hub.load('/home/popa/Documents/diplomski_rad/FingertipDetectionAndTrackingForPatternRecognitionOfAirWritingInVideos/yolov5', 'custom',
-                           path=model_path,
-                           source='local')
+def get_yolo_pic(img_path, model=None):
+    if model is None:
+        model_path = '/home/popa/Documents/diplomski_rad/FingertipDetectionAndTrackingForPatternRecognitionOfAirWritingInVideos/yolov5_best_model/best.pt'
+        model = torch.hub.load('/home/popa/Documents/diplomski_rad/FingertipDetectionAndTrackingForPatternRecognitionOfAirWritingInVideos/yolov5', 'custom',
+                               path=model_path,
+                               source='local')
     # img = '/home/popa/Pictures/Webcam/2022-01-19-215301_3.jpg'
     output = model(img_path)
     hands = []
@@ -172,14 +183,15 @@ def get_yolo_pic(img_path):
     return hands
 
 
-def get_segmented_hand(image):
+def get_segmented_hand(image, model=None):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     # SET UP MODEL
-    model_path = '/home/popa/Documents/diplomski_rad/FingertipDetectionAndTrackingForPatternRecognitionOfAirWritingInVideos/trained_models/final_model_100.pt'
-    model = rf101(num_classes=1)
-    model.load_state_dict(torch.load(model_path, map_location=device))
-    model.to(device)
-    model.eval()
+    if model is None:
+        model_path = '/home/popa/Documents/diplomski_rad/FingertipDetectionAndTrackingForPatternRecognitionOfAirWritingInVideos/trained_models/final_model_100.pt'
+        model = rf101(num_classes=1)
+        model.load_state_dict(torch.load(model_path, map_location=device))
+        model.to(device)
+        model.eval()
 
     # SET UP IMAGE
     # img_path = '/home/popa/Documents/diplomski_rad/FingertipDetectionAndTrackingForPatternRecognitionOfAirWritingInVideos/fingertip_detection/runs/detect/exp3/crops/hand/2022-01-19-215301_3.jpg'
@@ -207,7 +219,7 @@ def get_segmented_hand(image):
 
 
 def detect_fingers():
-    img_path = '/home/popa/Pictures/Webcam/2022-01-05-154447.jpg'
+    img_path = '/home/popa/Pictures/Webcam/2022-05-31-142151.jpg'
     hands = get_yolo_pic(img_path=img_path)
     for hand in hands:
         mask = get_segmented_hand(image=hand)
