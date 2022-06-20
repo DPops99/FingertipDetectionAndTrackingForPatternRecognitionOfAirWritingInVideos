@@ -33,6 +33,7 @@ def run(model_path='', video_path=''):
     trackers = cv2.legacy.MultiTracker_create()
     current_frame = 0
     trackers_set = False
+    frames = []
 
     while True:
         ret, frame = video.read()
@@ -62,6 +63,7 @@ def run(model_path='', video_path=''):
                 (x, y, w, h) = [int(v) for v in box]
                 cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
             current_frame += 1
+            frames.append(frame.copy())
             cv2.imshow("Frame", frame)
             k = cv2.waitKey(1) & 0xff
             if k == 27: break
@@ -71,6 +73,8 @@ def run(model_path='', video_path=''):
         # Release all space and windows once done
     video.release()
     cv2.destroyAllWindows()
+    print('len(frames) : {}'.format(len(frames)))
+    save_video(frames)
 
 def draw_bounding_box(prediction, image_path, reshaped_xyxy):
     print(prediction.xyxy[0])
@@ -130,6 +134,19 @@ def get_bounding_boxes(fingertips):
         bbox = (xmin, ymin, box_width, box_height)
         bounding_boxes.append(bbox)
     return bounding_boxes
+
+def save_video(frames):
+    height, width, layers = frames[1].shape
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    video = cv2.VideoWriter('/home/popa/Documents/diplomski_rad/FingertipDetectionAndTrackingForPatternRecognitionOfAirWritingInVideos/results/video.mp4', fourcc, 1, (width, height))
+
+    for j in range(len(frames)):
+        video.write(frames[j])
+        if cv2.waitKey(20) == ord('q'):
+            break
+
+    video.release()
+    cv2.destroyAllWindows()
 
 
 
