@@ -6,7 +6,6 @@ model_second_acc_15.pt
 model_second_acc_20.pt
 model_second_acc_25.pt
 seg_model.zip
-yolov5/
 runs/*
 runs_10s/*
 trained_models/*

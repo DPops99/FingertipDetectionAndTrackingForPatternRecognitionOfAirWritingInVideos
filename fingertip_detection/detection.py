@@ -4,7 +4,7 @@ from torchvision.transforms import transforms
 import math
 import matplotlib.pyplot as plt
 import torch
-from RefineNet_model.train import *
+# from RefineNet_model.train import *
 from PIL import Image
 import torch.nn.functional as F
 

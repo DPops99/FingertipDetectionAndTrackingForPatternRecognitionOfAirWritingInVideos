@@ -6,7 +6,8 @@ from fingertip_detection.detection import *
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 def get_yolo_model():
-    model_path = '/home/popa/Documents/diplomski_rad/FingertipDetectionAndTrackingForPatternRecognitionOfAirWritingInVideos/yolov5_best_model/best.pt'
+    # model_path = '/home/popa/Documents/diplomski_rad/FingertipDetectionAndTrackingForPatternRecognitionOfAirWritingInVideos/yolov5_best_model/best.pt'
+    model_path = '/home/popa/Documents/side_project/fingertip_segmentation_and_tracking/FingertipDetectionAndTrackingForPatternRecognitionOfAirWritingInVideos/runs_10s/content/yolov5/runs/train/exp/weights/best.pt'
     model = torch.hub.load(
         '/home/popa/Documents/diplomski_rad/FingertipDetectionAndTrackingForPatternRecognitionOfAirWritingInVideos/yolov5',
         'custom',
@@ -15,7 +16,8 @@ def get_yolo_model():
     return model
 
 def get_refinenet_model():
-    model_path = '/home/popa/Documents/diplomski_rad/FingertipDetectionAndTrackingForPatternRecognitionOfAirWritingInVideos/trained_models/final_model_100.pt'
+    # model_path = '/home/popa/Documents/diplomski_rad/FingertipDetectionAndTrackingForPatternRecognitionOfAirWritingInVideos/trained_models/final_model_100.pt'
+    model_path = '/home/popa/Documents/side_project/fingertip_segmentation_and_tracking/FingertipDetectionAndTrackingForPatternRecognitionOfAirWritingInVideos/refinenet_15.pt'
     model = rf101(num_classes=1)
     model.load_state_dict(torch.load(model_path, map_location=device))
     return model
@@ -74,7 +76,8 @@ def run(model_path='', video_path=''):
     video.release()
     cv2.destroyAllWindows()
     print('len(frames) : {}'.format(len(frames)))
-    save_video(frames)
+    
+    # save_video(frames)
 
 def draw_bounding_box(prediction, image_path, reshaped_xyxy):
     print(prediction.xyxy[0])
@@ -149,7 +152,62 @@ def save_video(frames):
     cv2.destroyAllWindows()
 
 
+def main():
+    print('-----------------SETTING UP YOLOv5 AND REFINENET MODEL-----------------')
+    yolo_model = get_yolo_model()
+    yolo_model.eval()
+    yolo_model.to(device)
+    refinenet_model = get_refinenet_model()
+    refinenet_model.eval()
+    refinenet_model.to(device)
+    print('-----------------STARTING VIDEO-----------------')
+    video = cv2.VideoCapture(video_path)
+    trackers = cv2.legacy.MultiTracker_create()
+    current_frame = 0
+    trackers_set = False
+    frames = []
 
+    while True:
+        ret, frame = video.read()
+        if ret:
+            if not trackers_set:
+                if current_frame%1 == 0:
+                    name = './data/frame{}.jpg'.format(current_frame)
+                    print('Creating...' + name)
+                    cv2.imwrite(name, frame)
+                    output = yolo_model(name)
+                    selected = output.crop(save=False)
+                    # draw_bounding_box(prediction=output, image_path=name, reshaped_xyxy= selected[0]['reshaped_xyxy'])
+
+                    for hand in output.crop(save=False):
+                        # cv2.imwrite(name.replace('.jpg','_yolo.jpg').replace('data','cropped_data'), hand['im'])
+                        # cv2.imshow('real hand', cv2.cvtColor(hand['im'], cv2.COLOR_BGR2RGB))
+                        # cv2.waitKey()
+                        mask = get_segmented_hand(image=cv2.cvtColor(hand['im'], cv2.COLOR_BGR2RGB), model=refinenet_model)
+                        fingertips = signature(mask=mask, image_real=cv2.cvtColor(hand['im'], cv2.COLOR_BGR2RGB))
+                        fingertips = fix_coordinates(croped_im_coordinates=hand['reshaped_xyxy'], fingertips_coordinates=fingertips)
+                        trackers = set_trackers(trackers, fingertips, frame)
+                        trackers_set = True
+                        # show_img(image_path=name, fingertips=fingertips)
+
+            (success, boxes) = trackers.update(frame)
+            for box in boxes:
+                (x, y, w, h) = [int(v) for v in box]
+                cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+            current_frame += 1
+            frames.append(frame.copy())
+            cv2.imshow("Frame", frame)
+            k = cv2.waitKey(1) & 0xff
+            if k == 27: break
+        else:
+            break
+
+        # Release all space and windows once done
+    video.release()
+    cv2.destroyAllWindows()
+    print('len(frames) : {}'.format(len(frames)))
+    
+    # save_video(frames)
 
 
 if __name__=='__main__':
