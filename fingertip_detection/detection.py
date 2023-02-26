@@ -9,6 +9,7 @@ from PIL import Image
 import torch.nn.functional as F
 
 
+
 def get_image(image_path):
     return cv2.imread(image_path)
 
@@ -84,26 +85,6 @@ def signature(mask,image_real):
     else:
         real_fingertips = []
 
-    # fig, axs = plt.subplots(len(real_distences))
-    # for index, dist in enumerate(real_distences):
-    #     x = [i for i in range(len(dist))]
-    #     axs[index].plot(x,dist)
-    # plt.show()
-
-    # image_real = get_image('/home/popa/Documents/diplomski_rad/FingertipDetectionAndTrackingForPatternRecognitionOfAirWritingInVideos/fingertip_detection/runs/detect/exp3/crops/hand/2022-01-19-215301_3.jpg')
-    # image_real = cv2.cvtColor(image_real,cv2.COLOR_BGR2RGB)
-    # cv2.drawContours(mask, [contour], -1, (0, 255, 0), 3)
-    # cv2.circle(mask, hand_center, 1, (0, 0, 255), -1)
-    # for point in far_points:
-    #     cv2.circle(mask, point, 3, (0, 0, 255), -1)
-    # for point in real_fingertips:
-    #     if len(point) != 0:
-    #         cv2.circle(mask, point[0], 3, (255, 0, 0), -1)
-    #         cv2.circle(image_real, point[0], 3, (255, 0, 0), -1)
-    # cv2.imshow('mask',mask)
-    # cv2.imshow('image_real',image_real)
-    # cv2.waitKey()
-
     return real_fingertips
 
 def get_longest_distance(distances):
@@ -163,39 +144,16 @@ def get_fingertip_indicies(fingertips, contour):
     return fingertip_indicies
 
 
-def get_yolo_pic(img_path, model=None):
-    if model is None:
-        model_path = '/home/popa/Documents/diplomski_rad/FingertipDetectionAndTrackingForPatternRecognitionOfAirWritingInVideos/yolov5_best_model/best.pt'
-        model = torch.hub.load('/home/popa/Documents/diplomski_rad/FingertipDetectionAndTrackingForPatternRecognitionOfAirWritingInVideos/yolov5', 'custom',
-                               path=model_path,
-                               source='local')
-    # img = '/home/popa/Pictures/Webcam/2022-01-19-215301_3.jpg'
+def get_yolo_pic(img_path, model):
     output = model(img_path)
     hands = []
     for hand in output.crop(save=False):
         hands.append(cv2.cvtColor(hand['im'], cv2.COLOR_BGR2RGB))
-        # cv2.imshow('img',cv2.cvtColor(hand['im'], cv2.COLOR_BGR2RGB))
-        # cv2.waitKey()
-    # img = output.crop(save=False)[0]['im']
-    # img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    # cv2.imshow('img', img)
-    # cv2.waitKey()
     return hands
 
 
 def get_segmented_hand(image, model=None):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    # SET UP MODEL
-    if model is None:
-        model_path = '/home/popa/Documents/diplomski_rad/FingertipDetectionAndTrackingForPatternRecognitionOfAirWritingInVideos/trained_models/final_model_100.pt'
-        model = rf101(num_classes=1)
-        model.load_state_dict(torch.load(model_path, map_location=device))
-        model.to(device)
-        model.eval()
-
-    # SET UP IMAGE
-    # img_path = '/home/popa/Documents/diplomski_rad/FingertipDetectionAndTrackingForPatternRecognitionOfAirWritingInVideos/fingertip_detection/runs/detect/exp3/crops/hand/2022-01-19-215301_3.jpg'
-    # image = Image.open(img_path).convert('RGB')
     image = Image.fromarray(image).convert('RGB')
     image = transforms.ToTensor()(image).to(device)
     image = torch.unsqueeze(image, dim=0)
@@ -211,19 +169,28 @@ def get_segmented_hand(image, model=None):
     pred_mask[pred_mask<0.5]=0.0
     print(pred_mask)
     out_mask = transforms.ToPILImage()(pred_mask)
-    # out_mask.show()
     out_mask = np.asarray(out_mask)
     out_mask = cv2.cvtColor(out_mask, cv2.COLOR_GRAY2BGR)
-    # out_mask.save(img_path.replace('.jpg','_segmented.jpg'))
     return out_mask
 
+def get_yolo_model(model_path):
+    model = torch.hub.load(
+        "yolov5",
+        "custom",
+        path=model_path,
+        source='local'
+        )
+    return model
 
-def detect_fingers():
-    img_path = '/home/popa/Pictures/Webcam/2022-05-31-142151.jpg'
-    hands = get_yolo_pic(img_path=img_path)
+
+def detect_fingers(img_path, yolo_model, seg_model):
+    hands = get_yolo_pic(img_path=img_path,
+                        model=yolo_model)
+    seg_masks, detected_fingertips = [], []
     for hand in hands:
-        mask = get_segmented_hand(image=hand)
-        signature(mask=mask, image_real=hand)
-
-if __name__=='__main__':
-    detect_fingers()
+        mask = get_segmented_hand(model=seg_model, 
+                                image=hand)
+        fingertips = signature(mask=mask, image_real=hand)
+        seg_masks.append(mask)
+        detected_fingertips.append(fingertips)
+    return seg_masks, detected_fingertips

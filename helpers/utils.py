@@ -40,5 +40,16 @@ def transform(img, mask):
 
     return img, mask
 
+def get_yolo_model(model_path):
+    model = torch.hub.load(
+        "yolov5",
+        "custom",
+        path=model_path,
+        source='local'
+        )
+    return model
+
+
+
 if __name__ == "__main__":
     update_labels()

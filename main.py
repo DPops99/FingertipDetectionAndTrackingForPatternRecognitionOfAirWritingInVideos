@@ -4,31 +4,13 @@ import numpy as np
 import torch
 from PIL import Image
 from fingertip_detection.detection import get_segmented_hand, signature
-from RefineNet_model.model import rf101
-
+from RefineNet_model.utils import get_refinenet_model
+from fingertip_detection.detection import get_yolo_model
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-def get_yolo_model(model_path):
-    model = torch.hub.load(
-        "yolov5",
-        "custom",
-        path=model_path,
-        source='local'
-        )
-    return model
-
-def get_refinenet_model(model_path):
-    model = rf101(num_classes=1)
-    model.load_state_dict(torch.load(model_path, map_location=device))
-    return model
-
-def run(video_path):
+def run(video_path, yolo_path, refine_path):
     print('-----------------SETTING UP YOLOv5 AND REFINENET MODEL-----------------')
-    # yolo_path = 'trained_models/yolov5/best.pt'
-    yolo_path = join('trained_models', 'yolov5', 'best.pt')
-    # refine_path = 'trained_models/refine_net/final_model_100.pt'
-    refine_path = join('trained_models', 'refine_net', 'final_model_100.pt')
     yolo_model = get_yolo_model(model_path=yolo_path)
     yolo_model.eval()
     yolo_model.to(device)
@@ -45,6 +27,7 @@ def run(video_path):
     while True:
         ret, frame = video.read()
         if ret:
+            frames.append(frame.copy())
             if not trackers_set:
                 if current_frame%1 == 0:
                     name = './data/yolo_frames/frame{}.jpg'.format(current_frame)
@@ -74,7 +57,6 @@ def run(video_path):
                 (x, y, w, h) = [int(v) for v in box]
                 cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
             current_frame += 1
-            frames.append(frame.copy())
             cv2.imshow("Frame", frame)
             k = cv2.waitKey(1) & 0xff
             if k == 27: break
@@ -86,7 +68,8 @@ def run(video_path):
     cv2.destroyAllWindows()
     print('len(frames) : {}'.format(len(frames)))
     
-    # save_video(frames)
+    save_video(frames=frames, 
+                input_video_path=video_path)
 
 def draw_bounding_box(prediction, image_path, reshaped_xyxy):
     print(prediction.xyxy[0])
@@ -169,4 +152,7 @@ def save_video(frames, input_video_path):
 
 
 if __name__=='__main__':
-    run(video_path='data/input_video/test_3.mp4')
+    video_path = 'data/input_video/hand_only_test2.mp4'
+    yolo_path = join('trained_models', 'yolov5', 'best.pt')
+    refine_path = join('trained_models', 'refine_net', 'final_model_100.pt')
+    run(video_path=video_path, yolo_path=yolo_path, refine_path=refine_path)

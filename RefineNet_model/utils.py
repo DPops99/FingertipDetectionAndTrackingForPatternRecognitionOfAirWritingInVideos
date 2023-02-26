@@ -1,6 +1,8 @@
 import matplotlib.pyplot as plt
 import json
 import os
+import torch
+from RefineNet_model.model import rf101
 
 def plot_loss(loss, type, save_path):
     x = [x for x in range(len(loss))]
@@ -23,12 +25,12 @@ def create_loss_report():
     for loss_item, save_path in zip(losses.items(), save_paths):
         key, value = loss_item
         print(type(value))
-        # if key == 'train_losses':
-        #     value = [x for x in value]
-        # else:
-        #     value = [x for x in value]
         plot_loss(loss=value, type=key, save_path=save_path)
 
+def get_refinenet_model(model_path, device):
+    model = rf101(num_classes=1)
+    model.load_state_dict(torch.load(model_path, map_location=device))
+    return model
 
 if __name__=='__main__':
     create_loss_report()
