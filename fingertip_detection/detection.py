@@ -188,6 +188,8 @@ def detect_fingers(img_path, yolo_model, seg_model):
                         model=yolo_model)
     seg_masks, detected_fingertips = [], []
     for hand in hands:
+        hand = cv2.resize(hand, (371, 462))
+        # hand = cv2.cvtColor(hand, cv2.COLOR_BGR2RGB)
         mask = get_segmented_hand(model=seg_model, 
                                 image=hand)
         fingertips = signature(mask=mask, image_real=hand)

@@ -14,11 +14,12 @@ def run(video_path, yolo_path, refine_path):
     yolo_model = get_yolo_model(model_path=yolo_path)
     yolo_model.eval()
     yolo_model.to(device)
-    refinenet_model = get_refinenet_model(model_path=refine_path)
+    refinenet_model = get_refinenet_model(model_path=refine_path, device=device)
     refinenet_model.eval()
     refinenet_model.to(device)
     print('-----------------STARTING VIDEO-----------------')
     video = cv2.VideoCapture(video_path)
+    video_frame_rate = int(video.get(cv2.CAP_PROP_FPS))
     trackers = cv2.legacy.MultiTracker_create()
     current_frame = 0
     trackers_set = False
@@ -27,7 +28,6 @@ def run(video_path, yolo_path, refine_path):
     while True:
         ret, frame = video.read()
         if ret:
-            frames.append(frame.copy())
             if not trackers_set:
                 if current_frame%1 == 0:
                     name = './data/yolo_frames/frame{}.jpg'.format(current_frame)
@@ -37,11 +37,17 @@ def run(video_path, yolo_path, refine_path):
                     selected = output.crop(save=False)
 
                     for hand in output.crop(save=False):
-                        mask = get_segmented_hand(image=cv2.cvtColor(hand['im'], cv2.COLOR_BGR2RGB), 
+                        prev_shape = hand['im'].shape
+                        print('hand: {}'.format(hand))
+                        image = cv2.resize(hand['im'], (371, 462))
+                        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+                        mask = get_segmented_hand(image=image, 
                                                     model=refinenet_model)
+                        print('prev shape: {}'.format(prev_shape))
+                        mask = cv2.resize(mask, prev_shape[:2])
                         cv2.imshow('Mask', mask)
                         fingertips = signature(mask=mask, 
-                                                image_real=cv2.cvtColor(hand['im'], cv2.COLOR_BGR2RGB))
+                                                image_real=image)
                         if len(fingertips) == 0:
                             continue
                         print('fingertips: {}'.format(fingertips))
@@ -60,6 +66,7 @@ def run(video_path, yolo_path, refine_path):
             cv2.imshow("Frame", frame)
             k = cv2.waitKey(1) & 0xff
             if k == 27: break
+            frames.append(frame.copy())
         else:
             break
 
@@ -69,7 +76,8 @@ def run(video_path, yolo_path, refine_path):
     print('len(frames) : {}'.format(len(frames)))
     
     save_video(frames=frames, 
-                input_video_path=video_path)
+                input_video_path=video_path,
+                video_frame_rate=video_frame_rate)
 
 def draw_bounding_box(prediction, image_path, reshaped_xyxy):
     print(prediction.xyxy[0])
@@ -135,12 +143,18 @@ def get_bounding_boxes(fingertips):
         bounding_boxes.append(bbox)
     return bounding_boxes
 
-def save_video(frames, input_video_path):
+def save_video(frames, input_video_path, video_frame_rate):
     prefix = split(input_video_path)[1]
     height, width, layers = frames[1].shape
+    print('frames: {}'.format(frames[0].shape))
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    video = cv2.VideoWriter(join('results', '{}_results.mp4'.format(prefix)), 
-                            fourcc, 1, (width, height))
+
+    save_path = join('results', prefix.replace('.mp4','_result.mp4'))
+    video = cv2.VideoWriter(save_path, 
+                            fourcc, 
+                            video_frame_rate, 
+                            (width, height))
+    print('saving video to: {}'.format(save_path))
 
     for j in range(len(frames)):
         video.write(frames[j])
