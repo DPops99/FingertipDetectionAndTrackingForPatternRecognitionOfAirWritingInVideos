@@ -4,7 +4,12 @@ from torch.utils.data import Dataset, ConcatDataset, DataLoader
 import os
 from PIL import Image
 from torchvision.transforms import transforms
-from RefineNet_model.custom_transforms import *
+from custom_transforms import *
+
+HGR1_ROOT = '/content/hgr1'
+HOF_ROOT = '/content/hand_over_face_corrected/hand_over_face'
+EYTH_ROOT = '/content/eyth_dataset'
+FREIHAND_ROOT = '/home/popa/Documents/fingertip_detection_and_tracking/datasets/fdt/segmentation_datasets/FreiHAND_pub_v2'
 
 class EgoHandsDataset(Dataset):
     def __init__(self):
@@ -109,7 +114,7 @@ class HOFDataset(Dataset):
         self.root = root
         self.paths = os.listdir(os.path.join(root, 'images_resized'))
         size = len(self.paths)
-        self.img_size = (371, 462)
+        self.img_size = (224,224)
         if type not in ['train', 'val', 'test']:
             raise Exception('Error while initialization. Argument type: {} is invalid. It must be train, val or test'.format(type))
         elif type == 'train':
@@ -246,19 +251,22 @@ class HGR1Dataset(Dataset):
     def __len__(self):
         return len(self.paths)
 
-def get_dataset(type, requested_dataset=None, hgr1_only=False):
-    hgr1_root = '/content/hgr1'
-    if hgr1_only:
-        return HGR1Dataset(root=hgr1_root, type=type)
-    hof_root = '/content/hand_over_face_corrected/hand_over_face'
-    eyth_root = '/content/eyth_dataset'
-    list_datasets = []
-    if requested_dataset is None:
-        list_datasets = [HGR1Dataset(root=hgr1_root, type=type),
-                         HOFDataset(root=hof_root, type=type),
-                         EgoYouTubeHandsDataset(root=eyth_root, type=type)
-                         ]
-    return ConcatDataset(list_datasets)
+def get_dataset(path, name, type):
+    # if hgr1_only:
+    #     return HGR1Dataset(root=HGR1_ROOT, type=type)
+    # if freihand_only:
+    #     return FreiHANDDataset(root=FREIHAND_ROOT, type=type)
+    # list_datasets = []
+    # if requested_dataset is None:
+    #     list_datasets = [HGR1Dataset(root=HGR1_ROOT, type=type),
+    #                      HOFDataset(root=HOF_ROOT, type=type),
+    #                      EgoYouTubeHandsDataset(root=EYTH_ROOT, type=type)
+    #                      ]
+    # return ConcatDataset(list_datasets)
+    if name == "HGR1":
+        return HGR1Dataset(root=path, type=type)
+    if name == "FreiHAND":
+        return FreiHANDDataset(root=path, type=type)
 
 
 def test_dataset():

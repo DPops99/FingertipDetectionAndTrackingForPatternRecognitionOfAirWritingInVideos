@@ -3,7 +3,7 @@ import torch.nn.functional as F
 import torch
 
 import numpy as np
-from RefineNet_model.layer_factory import conv1x1, conv3x3, CRPBlock, RCUBlock
+from layer_factory import conv1x1, conv3x3, CRPBlock, RCUBlock
 
 data_info = {
     21: 'VOC',

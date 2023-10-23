@@ -2,34 +2,74 @@ import sys
 import time
 import torch
 import json
-from RefineNet_model.model import *
-from datasets.data import *
+from torchvision.transforms import transforms
 from torch.utils.data.dataloader import DataLoader
 import torch.nn.functional as F
-from RefineNet_model.losses import dice_loss
+import os
+from tqdm import tqdm
+from model import *
+# from datasets.data import *
+from data import get_dataset
+from losses import dice_loss
+from utils import generate_save_root, load_config
 
 
-def train(batch_size=2, num_classes=1, epochs=2, save_path='/content/drive/MyDrive/refinenet', loss_type='bse', checkpoint_path=None):
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    train_dataset = get_dataset(type='train', hgr1_only=True)
-    valid_dataset = get_dataset(type='val', hgr1_only=True)
-    train_dataloader = DataLoader(train_dataset, batch_size=batch_size)
-    valid_dataloader = DataLoader(valid_dataset, batch_size=batch_size)
-    if loss_type == 'mse':
+def train(config_path):
+
+    # load input config file
+    config = load_config(file_path=config_path)
+
+    # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cpu")
+    
+    # save_root generate
+    save_root = generate_save_root()
+    os.makedirs(save_root, exist_ok=True)
+
+    # data loading
+    train_dataset = get_dataset(
+                        path=config['data']['path'],
+                        name=config["data"]["name"], 
+                        type='train'
+                    )
+    valid_dataset = get_dataset(
+                        path=config['data']['path'],
+                        name=config["data"]["name"], 
+                        type='val'
+                    )
+    train_dataloader = DataLoader(
+                        train_dataset, 
+                        batch_size=config["train"]["batch_size"]
+                    )
+    valid_dataloader = DataLoader(
+                        valid_dataset, 
+                        batch_size=config["train"]["batch_size"]   
+                    )
+
+    # loss function pick
+    if config["train"]["loss_type"] == 'mse':
         criterion = torch.nn.MSELoss(reduction='mean')
-    elif loss_type == 'bce':
+    elif config["train"]["loss_type"] == 'bce':
         criterion = torch.nn.BCEWithLogitsLoss()
-    elif loss_type == 'dice':
+    elif config["train"]["loss_type"] == 'dice':
         criterion = dice_loss
     else:
         criterion = torch.nn.BCEWithLogitsLoss()
-    model = rf101(num_classes=num_classes)
-    optimizer = torch.optim.Adam(model.parameters(), lr=1e-5)
-    scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
+
+    model = rf101(num_classes=config["train"]["num_classes"])
+    optimizer = torch.optim.Adam(
+                    model.parameters(), 
+                    lr=config["train"]["learning_rate"]
+                )
+    scheduler = torch.optim.lr_scheduler.ExponentialLR(
+                    optimizer, 
+                    gamma=config["train"]["gamma"]
+                )
     train_losses = []
     val_losses = []
-    if checkpoint_path is not None:
-        checkpoint = torch.load(checkpoint_path)
+
+    if config["train"]["checkpoint_path"] is not None:
+        checkpoint = torch.load(config["train"]["checkpoint_path"])
         model.load_state_dict(checkpoint['model_state_dict'])
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
         scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
@@ -38,16 +78,29 @@ def train(batch_size=2, num_classes=1, epochs=2, save_path='/content/drive/MyDri
         val_losses = checkpoint['val_losses']
     else:
         start_epoch = 0
+    
     model.to(device)
-    for epoch in range(start_epoch, epochs):
+
+    for epoch in tqdm(range(start_epoch, config["train"]["epochs"])):
         try:
             start_time = time.time()
             print('---------------------TRANING---------------------')
-            train_loss = train_one_epoch(model=model, optimizer=optimizer, criterion=criterion,
-                                         dataloader=train_dataloader, epoch=epoch, device=device)
+            train_loss = train_one_epoch(
+                        model=model, 
+                        optimizer=optimizer, 
+                        criterion=criterion,
+                        dataloader=train_dataloader, 
+                        epoch=epoch, 
+                        device=device
+                    )
             print('---------------------EVALUATION---------------------')
-            val_loss = eval_one_epoch(model=model, criterion=criterion, dataloader=valid_dataloader, epoch=epoch,
-                                      device=device)
+            val_loss = eval_one_epoch(
+                        model=model, 
+                        criterion=criterion, 
+                        dataloader=valid_dataloader, 
+                        epoch=epoch,
+                        device=device
+                    )
 
             train_losses.append(train_loss)
             val_losses.append(val_loss)
@@ -59,8 +112,8 @@ def train(batch_size=2, num_classes=1, epochs=2, save_path='/content/drive/MyDri
                     'scheduler_state_dict': scheduler.state_dict(),
                     'train_losses': train_losses,
                     'val_losses': val_losses
-                }, os.path.join(save_path, "final_model_{}.pt".format(epoch + 1)))
-                torch.save(model.state_dict(), os.path.join(save_path, "final_model_{}.pt".format(epoch + 1)))
+                }, os.path.join(save_root, "final_model_{}.pt".format(epoch + 1)))
+                torch.save(model.state_dict(), os.path.join(save_root, "final_model_{}.pt".format(epoch + 1)))
             scheduler.step()
             print('Epoch {} finished in {} seconds'.format(epoch, time.time() - start_time))
         except KeyboardInterrupt:
@@ -71,14 +124,14 @@ def train(batch_size=2, num_classes=1, epochs=2, save_path='/content/drive/MyDri
                 'scheduler_state_dict':scheduler.state_dict(),
                 'train_losses': train_losses,
                 'val_losses': val_losses
-            }, os.path.join(save_path, "current_model.pt"))
-            with open(os.path.join(save_path, 'current_model_losses.json'), 'w') as f:
+            }, os.path.join(save_root, "current_model.pt"))
+            with open(os.path.join(save_root, 'current_model_losses.json'), 'w') as f:
                 json.dump({
                     'train_losses': train_losses,
                     'val_losses': val_losses
                 }, f)
             sys.exit(0)
-    with open(os.path.join(save_path, 'final_model_losses.json'), 'w') as f:
+    with open(os.path.join(save_root, 'final_model_losses.json'), 'w') as f:
         json.dump({
             'train_losses': train_losses,
             'val_losses': val_losses
@@ -88,8 +141,8 @@ def train(batch_size=2, num_classes=1, epochs=2, save_path='/content/drive/MyDri
 def train_one_epoch(model, optimizer, criterion, dataloader, epoch, device):
     model.train()
     total_loss = 0.0
-    # img_size = dataloader.dataset.img_size
-    img_size = dataloader.dataset.datasets[0].img_size
+    img_size = dataloader.dataset.img_size
+    # img_size = dataloader.dataset.datasets[0].img_size
     for index, batch in enumerate(dataloader):
         loss = 0.0
         inputs = batch['img'].to(device)
@@ -97,7 +150,10 @@ def train_one_epoch(model, optimizer, criterion, dataloader, epoch, device):
         optimizer.zero_grad()
         outputs = model(inputs)
         for output, mask in zip(outputs, masks):
-            output = transforms.Resize(img_size, interpolation=transforms.InterpolationMode.BILINEAR)(output)
+            output = transforms.Resize(
+                img_size, 
+                interpolation=transforms.InterpolationMode.BILINEAR
+            )(output)
             loss += criterion(
                 output,
                 mask
@@ -117,8 +173,8 @@ def train_one_epoch(model, optimizer, criterion, dataloader, epoch, device):
 def eval_one_epoch(model, criterion, dataloader, epoch, device):
     model.eval()
     total_loss = 0.0
-    # img_size = dataloader.dataset.img_size
-    img_size = dataloader.dataset.datasets[0].img_size
+    img_size = dataloader.dataset.img_size
+    # img_size = dataloader.dataset.datasets[0].img_size
     for index, batch in enumerate(dataloader):
         loss = 0.0
         inputs = batch['img'].to(device)
@@ -126,7 +182,10 @@ def eval_one_epoch(model, criterion, dataloader, epoch, device):
         with torch.no_grad():
             outputs = model(inputs)
         for output, mask in zip(outputs, masks):
-            output = transforms.Resize(img_size, interpolation=transforms.InterpolationMode.BILINEAR)(output)
+            output = transforms.Resize(
+                img_size, 
+                interpolation=transforms.InterpolationMode.BILINEAR
+            )(output)
             loss += criterion(
                 output,
                 mask
@@ -141,5 +200,5 @@ def eval_one_epoch(model, criterion, dataloader, epoch, device):
 
 
 if __name__ == '__main__':
-    datapath = '/home/popa/Documents/diplomski_rad/FingertipDetectionAndTrackingForPatternRecognitionOfAirWritingInVideos/segmentation_dataset/hgr1'
-    train(batch_size=8, num_classes=1, epochs=15, loss_type='bce')
+    config_path = '/home/popa/Documents/fingertip_detection_and_tracking/FingertipDetectionAndTrackingForPatternRecognitionOfAirWritingInVideos/RefineNet_model/config.yaml'
+    train(config_path=config_path)

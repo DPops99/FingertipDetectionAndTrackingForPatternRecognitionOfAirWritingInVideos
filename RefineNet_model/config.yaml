@@ -1,0 +1,15 @@
+
+data:
+  name: "HGR1"
+  path: "/home/popa/Documents/fingertip_detection_and_tracking/datasets/fdt/segmentation_datasets/hgr1"
+
+train:
+  batch_size: 2
+  num_classes: 1
+  epochs: 1
+  loss_type: "bce"
+  checkpoint_path: null
+  learning_rate: 0.00001
+  weight_decay: 0
+  gamma: 0.9
+

@@ -2,7 +2,8 @@ import os.path
 
 from model import rf101
 import torch
-from datasets.data import *
+# from datasets.data import *
+from RefineNet_model.data import *
 from torch.utils.data import DataLoader
 from torchvision.transforms import transforms
 import torch.nn.functional as F
