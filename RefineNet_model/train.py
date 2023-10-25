@@ -23,7 +23,7 @@ def train(config_path):
     device = torch.device("cpu")
     
     # save_root generate
-    save_root = generate_save_root()
+    save_root = generate_save_root(config=config)
     os.makedirs(save_root, exist_ok=True)
 
     # data loading

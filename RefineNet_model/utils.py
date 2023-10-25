@@ -38,7 +38,7 @@ def get_refinenet_model(model_path, device):
 def generate_save_root(config):
     fromat = '%Y-%m-%d %H:%M:%S'
     current_time = datetime.now().strftime(fromat)
-    return os.path.join(config['save_root'],current_time, 'checkpoints')
+    return os.path.join(config['data']['save_root'],current_time, 'checkpoints')
 
 def load_config(file_path):
     with open(file_path, 'r') as file:
