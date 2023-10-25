@@ -19,8 +19,8 @@ def train(config_path):
     # load input config file
     config = load_config(file_path=config_path)
 
-    # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    device = torch.device("cpu")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    # device = torch.device("cpu")
     
     # save_root generate
     save_root = generate_save_root(config=config)
