@@ -1,4 +1,5 @@
 segmentation_dataset/*
+RefineNet_model/.ipynb_checkpoints/*
 EgoHandsPublic.v1-specific.yolov5pytorch/*
 EgoHandsPublic.v1-specific.yolov5pytorch.zip
 seg_model_9.pt
