@@ -11,7 +11,7 @@ from model import *
 # from datasets.data import *
 from data import get_dataset
 from losses import dice_loss
-from utils import generate_save_root, load_config
+from utils import generate_save_root, load_config, get_args
 
 
 def train(config_path):
@@ -200,5 +200,6 @@ def eval_one_epoch(model, criterion, dataloader, epoch, device):
 
 
 if __name__ == '__main__':
-    config_path = '/home/popa/Documents/fingertip_detection_and_tracking/FingertipDetectionAndTrackingForPatternRecognitionOfAirWritingInVideos/RefineNet_model/config.yaml'
-    train(config_path=config_path)
+    args = get_args()
+    # config_path = '/home/popa/Documents/fingertip_detection_and_tracking/FingertipDetectionAndTrackingForPatternRecognitionOfAirWritingInVideos/RefineNet_model/config.yaml'
+    train(config_path=args.config)

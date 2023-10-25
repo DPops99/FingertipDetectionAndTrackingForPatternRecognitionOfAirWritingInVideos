@@ -4,6 +4,7 @@ import os
 import torch
 from datetime import datetime 
 import yaml
+import argparse
 from model import rf101
 
 def plot_loss(loss, type, save_path):
@@ -34,16 +35,20 @@ def get_refinenet_model(model_path, device):
     model.load_state_dict(torch.load(model_path, map_location=device))
     return model
 
-def generate_save_root():
+def generate_save_root(config):
     fromat = '%Y-%m-%d %H:%M:%S'
     current_time = datetime.now().strftime(fromat)
-    return os.path.join('.',current_time, 'checkpoints')
+    return os.path.join(config['save_root'],current_time, 'checkpoints')
 
 def load_config(file_path):
     with open(file_path, 'r') as file:
         value = yaml.safe_load(file)
-    
     return value
+
+def get_args():
+    parser = argparse.ArgumentParser(description='Train RefineNet model')
+    parser.add_argument('--config', type=str)
+    return parser.parse_args()
 
 if __name__=='__main__':
     create_loss_report()

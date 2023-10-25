@@ -55,9 +55,7 @@ class Resize(object):
 
 def get_transformations():
     transform_list = []
-    img_size = (371, 462)
     kernel_size = 5
-    transform_list.append(Resize(img_size))
     transform_list.append(VerticalFlip())
     transform_list.append(HorizontalFlip())
     transform_list.append(RandomRotate())

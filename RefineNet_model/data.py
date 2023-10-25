@@ -68,7 +68,7 @@ class FreiHANDDataset(Dataset):
         self.root = root
         self.paths = os.listdir(os.path.join(root, 'training', 'mask'))
         size = len(self.paths)
-        self.img_size = (371, 462)
+        self.img_size = (224, 224)
         if type not in ['train', 'val', 'test']:
             raise Exception('Error while initialization. Argument type: {} is invalid. It must be train, val or test'.format(type))
         elif type == 'train':
@@ -252,17 +252,6 @@ class HGR1Dataset(Dataset):
         return len(self.paths)
 
 def get_dataset(path, name, type):
-    # if hgr1_only:
-    #     return HGR1Dataset(root=HGR1_ROOT, type=type)
-    # if freihand_only:
-    #     return FreiHANDDataset(root=FREIHAND_ROOT, type=type)
-    # list_datasets = []
-    # if requested_dataset is None:
-    #     list_datasets = [HGR1Dataset(root=HGR1_ROOT, type=type),
-    #                      HOFDataset(root=HOF_ROOT, type=type),
-    #                      EgoYouTubeHandsDataset(root=EYTH_ROOT, type=type)
-    #                      ]
-    # return ConcatDataset(list_datasets)
     if name == "HGR1":
         return HGR1Dataset(root=path, type=type)
     if name == "FreiHAND":

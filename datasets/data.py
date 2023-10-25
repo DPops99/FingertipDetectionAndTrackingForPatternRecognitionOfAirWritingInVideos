@@ -6,6 +6,8 @@ from PIL import Image
 from torchvision.transforms import transforms
 from RefineNet_model.custom_transforms import *
 
+
+
 class EgoHandsDataset(Dataset):
     def __init__(self):
         ...

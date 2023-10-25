@@ -1,7 +1,8 @@
 
 data:
-  name: "HGR1"
-  path: "/home/popa/Documents/fingertip_detection_and_tracking/datasets/fdt/segmentation_datasets/hgr1"
+  name: "FreiHAND"
+  path: "/content/FreiHAND_pub_v2/"
+  save_root: "/content/refine_net/"
 
 train:
   batch_size: 2

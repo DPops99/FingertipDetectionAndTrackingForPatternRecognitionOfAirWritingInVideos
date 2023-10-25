@@ -45,7 +45,7 @@ def run(video_path, yolo_path, refine_path):
                                                     model=refinenet_model)
                         print('prev shape: {}'.format(prev_shape))
                         mask = cv2.resize(mask, prev_shape[:2])
-                        cv2.imshow('Mask', mask)
+                        # cv2.imshow('Mask', mask)
                         fingertips = signature(mask=mask, 
                                                 image_real=image)
                         if len(fingertips) == 0:
@@ -63,9 +63,9 @@ def run(video_path, yolo_path, refine_path):
                 (x, y, w, h) = [int(v) for v in box]
                 cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
             current_frame += 1
-            cv2.imshow("Frame", frame)
-            k = cv2.waitKey(1) & 0xff
-            if k == 27: break
+            # cv2.imshow("Frame", frame)
+            # k = cv2.waitKey(1) & 0xff
+            # if k == 27: break
             frames.append(frame.copy())
         else:
             break
