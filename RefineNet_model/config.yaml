@@ -1,3 +1,5 @@
+config_path: "./config.yaml"
+
 data:
   name: "FreiHAND"
   path: "/content/FreiHAND_pub_v2/"

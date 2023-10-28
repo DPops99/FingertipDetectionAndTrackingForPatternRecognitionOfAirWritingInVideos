@@ -7,6 +7,7 @@ from torch.utils.data.dataloader import DataLoader
 import torch.nn.functional as F
 import os
 from tqdm import tqdm
+import shutil
 from model import *
 # from datasets.data import *
 from data import get_dataset
@@ -104,7 +105,7 @@ def train(config_path):
 
             train_losses.append(train_loss)
             val_losses.append(val_loss)
-            if (epoch + 1) % 10 == 0:
+            if (epoch + 1) % 10 == 0 or epoch == config["train"]["epochs"]-1:
                 torch.save({
                     'epoch': epoch + 1,
                     'model_state_dict': model.state_dict(),
@@ -112,10 +113,11 @@ def train(config_path):
                     'scheduler_state_dict': scheduler.state_dict(),
                     'train_losses': train_losses,
                     'val_losses': val_losses
-                }, os.path.join(save_root, "final_model_{}.pt".format(epoch + 1)))
-                torch.save(model.state_dict(), os.path.join(save_root, "final_model_{}.pt".format(epoch + 1)))
+                }, os.path.join(save_root, "checkpoint_{}.pt".format(epoch + 1)))
+                # torch.save(model.state_dict(), os.path.join(save_root, "final_model_{}.pt".format(epoch + 1)))
             scheduler.step()
             print('Epoch {} finished in {} seconds'.format(epoch, time.time() - start_time))
+
         except KeyboardInterrupt:
             torch.save({
                 'epoch': epoch,
@@ -124,18 +126,22 @@ def train(config_path):
                 'scheduler_state_dict':scheduler.state_dict(),
                 'train_losses': train_losses,
                 'val_losses': val_losses
-            }, os.path.join(save_root, "current_model.pt"))
-            with open(os.path.join(save_root, 'current_model_losses.json'), 'w') as f:
+            }, os.path.join(save_root, "interrupted_checkpoint.pt"))
+            with open(os.path.join(save_root, 'interrupted_checkpoint_losses.json'), 'w') as f:
                 json.dump({
                     'train_losses': train_losses,
                     'val_losses': val_losses
                 }, f)
             sys.exit(0)
-    with open(os.path.join(save_root, 'final_model_losses.json'), 'w') as f:
+    with open(os.path.join(save_root, 'checkpoints_losses.json'), 'w') as f:
         json.dump({
             'train_losses': train_losses,
             'val_losses': val_losses
         }, f)
+
+    shutil.copyfile(config['config_path'], os.path.join(save_root, 'input_config.yaml'))
+        
+
 
 
 def train_one_epoch(model, optimizer, criterion, dataloader, epoch, device):
