@@ -23,7 +23,7 @@ if __name__=='__main__':
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     img_path = './data/test_data/test_18.jpg'
     yolo_model_path = join('trained_models', 'yolov5', 'best.pt')
-    seg_model_path = join('trained_models', 'refine_net', 'final_model_100.pt')
+    seg_model_path = join('trained_models', 'refine_net', 'checkpoint_10.pt')
     test_detection(
         img_path=img_path,
         yolo_model_path=yolo_model_path,

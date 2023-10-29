@@ -69,6 +69,8 @@ def train(config_path):
     train_losses = []
     val_losses = []
 
+    model.to(device)
+
     if config["train"]["checkpoint_path"] is not None:
         checkpoint = torch.load(config["train"]["checkpoint_path"])
         model.load_state_dict(checkpoint['model_state_dict'])
@@ -79,8 +81,8 @@ def train(config_path):
         val_losses = checkpoint['val_losses']
     else:
         start_epoch = 0
-    
-    model.to(device)
+
+    shutil.copyfile(config['config_path'], os.path.join(save_root, 'input_config.yaml')) 
 
     for epoch in tqdm(range(start_epoch, config["train"]["epochs"])):
         try:
@@ -116,7 +118,7 @@ def train(config_path):
                 }, os.path.join(save_root, "checkpoint_{}.pt".format(epoch + 1)))
                 # torch.save(model.state_dict(), os.path.join(save_root, "final_model_{}.pt".format(epoch + 1)))
             scheduler.step()
-            print('Epoch {} finished in {} seconds'.format(epoch, time.time() - start_time))
+            print('Epoch {} finished in {} seconds'.format(epoch+1, time.time() - start_time))
 
         except KeyboardInterrupt:
             torch.save({
@@ -138,8 +140,6 @@ def train(config_path):
             'train_losses': train_losses,
             'val_losses': val_losses
         }, f)
-
-    shutil.copyfile(config['config_path'], os.path.join(save_root, 'input_config.yaml'))
         
 
 

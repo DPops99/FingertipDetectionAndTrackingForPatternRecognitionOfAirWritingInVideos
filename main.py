@@ -37,9 +37,11 @@ def run(video_path, yolo_path, refine_path):
                     selected = output.crop(save=False)
 
                     for hand in output.crop(save=False):
+                        # if len(hand['im']) == 0:
+                        #     continue
                         prev_shape = hand['im'].shape
                         print('hand: {}'.format(hand))
-                        image = cv2.resize(hand['im'], (371, 462))
+                        image = cv2.resize(hand['im'], (224, 224))
                         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
                         mask = get_segmented_hand(image=image, 
                                                     model=refinenet_model)
@@ -166,7 +168,7 @@ def save_video(frames, input_video_path, video_frame_rate):
 
 
 if __name__=='__main__':
-    video_path = 'data/input_video/hand_only_test2.mp4'
+    video_path = 'data/input_video/test_1.mp4'
     yolo_path = join('trained_models', 'yolov5', 'best.pt')
-    refine_path = join('trained_models', 'refine_net', 'final_model_100.pt')
+    refine_path = join('trained_models', 'refine_net', 'checkpoint_10.pt')
     run(video_path=video_path, yolo_path=yolo_path, refine_path=refine_path)

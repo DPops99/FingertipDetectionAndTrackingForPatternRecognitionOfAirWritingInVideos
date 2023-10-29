@@ -32,7 +32,7 @@ def create_loss_report():
 
 def get_refinenet_model(model_path, device):
     model = rf101(num_classes=1)
-    model.load_state_dict(torch.load(model_path, map_location=device))
+    model.load_state_dict(torch.load(model_path, map_location=device)['model_state_dict'])
     return model
 
 def generate_save_root(config):
